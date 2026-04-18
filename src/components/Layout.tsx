@@ -2,6 +2,7 @@
 import { Link, Outlet } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { loadStats, levelFromXP } from "@/lib/store";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const TABS = [
   { to: "/", label: "Home" },
@@ -70,6 +71,7 @@ export function Layout() {
             >
               Lv {level}
             </span>
+            <ThemeToggle />
           </div>
         </div>
       </header>
