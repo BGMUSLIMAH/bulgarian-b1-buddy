@@ -187,7 +187,7 @@ const daily: WT[] = [
   ["помощ", "help", "Имам нужда от помощ.", "I need help."],
 ];
 
-const work: Word[] = [
+const work: WT[] = [
   ["работа", "work / job", "Отивам на работа.", "I'm going to work."],
   ["офис", "office", "Офисът е затворен.", "The office is closed."],
   ["шеф", "boss", "Шефът е строг.", "The boss is strict."],
@@ -274,7 +274,7 @@ const work: Word[] = [
   ["решение", "decision / solution", "Намерих решение.", "I found a solution."],
 ];
 
-const mechanical: Word[] = [
+const mechanical: WT[] = [
   ["двигател", "engine", "Двигателят не пали.", "The engine doesn't start."],
   ["масло", "oil", "Маслото е мръсно.", "The oil is dirty."],
   ["гориво", "fuel", "Горивото свършва.", "The fuel is running out."],
