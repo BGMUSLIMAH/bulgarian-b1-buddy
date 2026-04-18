@@ -71,6 +71,35 @@ function RootShell({ children }: { children: React.ReactNode }) {
   );
 }
 
+const SW_REGISTER = `
+(function () {
+  if (!('serviceWorker' in navigator)) return;
+  try {
+    var inIframe = window.self !== window.top;
+    var host = window.location.hostname;
+    var isPreview =
+      host.indexOf('id-preview--') !== -1 ||
+      host.indexOf('lovableproject.com') !== -1 ||
+      host.indexOf('lovable.app') !== -1 && host.indexOf('id-preview--') !== -1;
+    if (inIframe || isPreview) {
+      navigator.serviceWorker.getRegistrations().then(function (rs) {
+        rs.forEach(function (r) { r.unregister(); });
+      });
+      return;
+    }
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').catch(function () {});
+    });
+  } catch (e) {}
+})();
+`;
+
 function RootComponent() {
-  return <Layout />;
+  return (
+    <>
+      <Layout />
+      <script dangerouslySetInnerHTML={{ __html: SW_REGISTER }} />
+    </>
+  );
 }
+
