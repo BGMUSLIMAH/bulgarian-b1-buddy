@@ -35,6 +35,10 @@ export const Route = createRootRoute({
       { property: "og:title", content: "Bulgarian Trainer B1 — Learn real-life & technical Bulgarian" },
       { property: "og:description", content: "Reach B1 Bulgarian with vocabulary, verbs, quizzes, listening, speaking, reading, and a full evaluation system." },
       { property: "og:type", content: "website" },
+      { name: "theme-color", content: "#2f6b3a" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "default" },
+      { name: "apple-mobile-web-app-title", content: "БГ Trainer" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:title", content: "Bulgarian Trainer B1 — Learn real-life & technical Bulgarian" },
       { name: "twitter:description", content: "Reach B1 Bulgarian with vocabulary, verbs, quizzes, listening, speaking, reading, and a full evaluation system." },
@@ -42,10 +46,10 @@ export const Route = createRootRoute({
       { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/43aa8449-0677-49bc-8658-d83987d2932b/id-preview-1418d7fc--ce02234b-5056-4f16-ab09-28865c57b06e.lovable.app-1776525686241.png" },
     ],
     links: [
-      {
-        rel: "stylesheet",
-        href: appCss,
-      },
+      { rel: "stylesheet", href: appCss },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "icon", href: "/icon-512.png", type: "image/png" },
+      { rel: "apple-touch-icon", href: "/icon-512.png" },
     ],
   }),
   shellComponent: RootShell,
@@ -67,6 +71,35 @@ function RootShell({ children }: { children: React.ReactNode }) {
   );
 }
 
+const SW_REGISTER = `
+(function () {
+  if (!('serviceWorker' in navigator)) return;
+  try {
+    var inIframe = window.self !== window.top;
+    var host = window.location.hostname;
+    var isPreview =
+      host.indexOf('id-preview--') !== -1 ||
+      host.indexOf('lovableproject.com') !== -1 ||
+      host.indexOf('lovable.app') !== -1 && host.indexOf('id-preview--') !== -1;
+    if (inIframe || isPreview) {
+      navigator.serviceWorker.getRegistrations().then(function (rs) {
+        rs.forEach(function (r) { r.unregister(); });
+      });
+      return;
+    }
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').catch(function () {});
+    });
+  } catch (e) {}
+})();
+`;
+
 function RootComponent() {
-  return <Layout />;
+  return (
+    <>
+      <Layout />
+      <script dangerouslySetInnerHTML={{ __html: SW_REGISTER }} />
+    </>
+  );
 }
+
