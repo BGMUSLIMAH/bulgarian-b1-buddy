@@ -7,8 +7,8 @@ import { loadStats, type Stats } from "@/lib/store";
 export const Route = createFileRoute("/")({ component: Dashboard });
 
 const TILES = [
-  { to: "/words", title: "Words", desc: "500+ real-life and technical Bulgarian words", emoji: "📚" },
-  { to: "/verbs", title: "Verbs", desc: "150+ verbs with full present-tense conjugations", emoji: "🔤" },
+  { to: "/words", title: "Words", desc: "750+ Bulgarian words across 11 life & career topics", emoji: "📚" },
+  { to: "/verbs", title: "Verbs", desc: "200+ verbs with full present-tense conjugations", emoji: "🔤" },
   { to: "/quiz", title: "Practice Quiz", desc: "EN → BG multiple choice, instant feedback", emoji: "🎯" },
   { to: "/daily", title: "Daily Session", desc: "10–20 mixed questions for daily training", emoji: "🗓️" },
   { to: "/listening", title: "Listening", desc: "Hear Bulgarian and pick the right answer", emoji: "🎧" },
