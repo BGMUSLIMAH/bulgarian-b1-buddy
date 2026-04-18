@@ -1,4 +1,5 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
+import { Layout } from "@/components/Layout";
 
 import appCss from "../styles.css?url";
 
@@ -29,14 +30,12 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "Bulgarian Trainer B1 — Learn real-life & technical Bulgarian" },
+      { name: "description", content: "Reach B1 Bulgarian with vocabulary, verbs, quizzes, listening, speaking, reading, and a full evaluation system." },
+      { property: "og:title", content: "Bulgarian Trainer B1" },
+      { property: "og:description", content: "Real-life and mechanical Bulgarian, from beginner to B1." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
       {
@@ -65,5 +64,5 @@ function RootShell({ children }: { children: React.ReactNode }) {
 }
 
 function RootComponent() {
-  return <Outlet />;
+  return <Layout />;
 }
