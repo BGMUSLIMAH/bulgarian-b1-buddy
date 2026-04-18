@@ -389,9 +389,6 @@ const mechanical: WT[] = [
   ["авариен изход", "emergency exit", "Авариен изход е там.", "The emergency exit is there."],
 ];
 
-function build(arr: Word[], cat: Category): Word[] {
-  return arr.map((w) => ({ ...w, category: cat }));
-}
 
 // Tuple form -> object form
 function fromTuples(tuples: any[], cat: Category): Word[] {
