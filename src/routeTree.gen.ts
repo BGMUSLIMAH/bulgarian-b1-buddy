@@ -9,8 +9,62 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WordsRouteImport } from './routes/words'
+import { Route as VerbsRouteImport } from './routes/verbs'
+import { Route as SpeakingRouteImport } from './routes/speaking'
+import { Route as ReadingRouteImport } from './routes/reading'
+import { Route as QuizRouteImport } from './routes/quiz'
+import { Route as ProgressRouteImport } from './routes/progress'
+import { Route as ListeningRouteImport } from './routes/listening'
+import { Route as EvaluationRouteImport } from './routes/evaluation'
+import { Route as DailyRouteImport } from './routes/daily'
 import { Route as IndexRouteImport } from './routes/index'
 
+const WordsRoute = WordsRouteImport.update({
+  id: '/words',
+  path: '/words',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VerbsRoute = VerbsRouteImport.update({
+  id: '/verbs',
+  path: '/verbs',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SpeakingRoute = SpeakingRouteImport.update({
+  id: '/speaking',
+  path: '/speaking',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReadingRoute = ReadingRouteImport.update({
+  id: '/reading',
+  path: '/reading',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const QuizRoute = QuizRouteImport.update({
+  id: '/quiz',
+  path: '/quiz',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProgressRoute = ProgressRouteImport.update({
+  id: '/progress',
+  path: '/progress',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ListeningRoute = ListeningRouteImport.update({
+  id: '/listening',
+  path: '/listening',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EvaluationRoute = EvaluationRouteImport.update({
+  id: '/evaluation',
+  path: '/evaluation',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DailyRoute = DailyRouteImport.update({
+  id: '/daily',
+  path: '/daily',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -19,28 +73,158 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/daily': typeof DailyRoute
+  '/evaluation': typeof EvaluationRoute
+  '/listening': typeof ListeningRoute
+  '/progress': typeof ProgressRoute
+  '/quiz': typeof QuizRoute
+  '/reading': typeof ReadingRoute
+  '/speaking': typeof SpeakingRoute
+  '/verbs': typeof VerbsRoute
+  '/words': typeof WordsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/daily': typeof DailyRoute
+  '/evaluation': typeof EvaluationRoute
+  '/listening': typeof ListeningRoute
+  '/progress': typeof ProgressRoute
+  '/quiz': typeof QuizRoute
+  '/reading': typeof ReadingRoute
+  '/speaking': typeof SpeakingRoute
+  '/verbs': typeof VerbsRoute
+  '/words': typeof WordsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/daily': typeof DailyRoute
+  '/evaluation': typeof EvaluationRoute
+  '/listening': typeof ListeningRoute
+  '/progress': typeof ProgressRoute
+  '/quiz': typeof QuizRoute
+  '/reading': typeof ReadingRoute
+  '/speaking': typeof SpeakingRoute
+  '/verbs': typeof VerbsRoute
+  '/words': typeof WordsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/daily'
+    | '/evaluation'
+    | '/listening'
+    | '/progress'
+    | '/quiz'
+    | '/reading'
+    | '/speaking'
+    | '/verbs'
+    | '/words'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/daily'
+    | '/evaluation'
+    | '/listening'
+    | '/progress'
+    | '/quiz'
+    | '/reading'
+    | '/speaking'
+    | '/verbs'
+    | '/words'
+  id:
+    | '__root__'
+    | '/'
+    | '/daily'
+    | '/evaluation'
+    | '/listening'
+    | '/progress'
+    | '/quiz'
+    | '/reading'
+    | '/speaking'
+    | '/verbs'
+    | '/words'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  DailyRoute: typeof DailyRoute
+  EvaluationRoute: typeof EvaluationRoute
+  ListeningRoute: typeof ListeningRoute
+  ProgressRoute: typeof ProgressRoute
+  QuizRoute: typeof QuizRoute
+  ReadingRoute: typeof ReadingRoute
+  SpeakingRoute: typeof SpeakingRoute
+  VerbsRoute: typeof VerbsRoute
+  WordsRoute: typeof WordsRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/words': {
+      id: '/words'
+      path: '/words'
+      fullPath: '/words'
+      preLoaderRoute: typeof WordsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/verbs': {
+      id: '/verbs'
+      path: '/verbs'
+      fullPath: '/verbs'
+      preLoaderRoute: typeof VerbsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/speaking': {
+      id: '/speaking'
+      path: '/speaking'
+      fullPath: '/speaking'
+      preLoaderRoute: typeof SpeakingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reading': {
+      id: '/reading'
+      path: '/reading'
+      fullPath: '/reading'
+      preLoaderRoute: typeof ReadingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/quiz': {
+      id: '/quiz'
+      path: '/quiz'
+      fullPath: '/quiz'
+      preLoaderRoute: typeof QuizRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/progress': {
+      id: '/progress'
+      path: '/progress'
+      fullPath: '/progress'
+      preLoaderRoute: typeof ProgressRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/listening': {
+      id: '/listening'
+      path: '/listening'
+      fullPath: '/listening'
+      preLoaderRoute: typeof ListeningRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/evaluation': {
+      id: '/evaluation'
+      path: '/evaluation'
+      fullPath: '/evaluation'
+      preLoaderRoute: typeof EvaluationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/daily': {
+      id: '/daily'
+      path: '/daily'
+      fullPath: '/daily'
+      preLoaderRoute: typeof DailyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -53,6 +237,15 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DailyRoute: DailyRoute,
+  EvaluationRoute: EvaluationRoute,
+  ListeningRoute: ListeningRoute,
+  ProgressRoute: ProgressRoute,
+  QuizRoute: QuizRoute,
+  ReadingRoute: ReadingRoute,
+  SpeakingRoute: SpeakingRoute,
+  VerbsRoute: VerbsRoute,
+  WordsRoute: WordsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
