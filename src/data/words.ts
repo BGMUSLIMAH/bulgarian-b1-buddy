@@ -9,7 +9,8 @@ export interface Word {
   category: Category;
 }
 
-const daily: Word[] = [
+type WT = [string, string, string, string];
+const daily: WT[] = [
   ["здравей", "hello", "Здравей, как си?", "Hello, how are you?"],
   ["довиждане", "goodbye", "Довиждане, до утре!", "Goodbye, see you tomorrow!"],
   ["благодаря", "thank you", "Благодаря много за помощта.", "Thank you very much for the help."],
