@@ -1,0 +1,25 @@
+{
+  "name": "Български Trainer — Learn Bulgarian B1",
+  "short_name": "БГ Trainer",
+  "description": "Reach B1 Bulgarian with 750+ words, 200+ verbs, quizzes, listening, speaking, reading and evaluation.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f6f1e3",
+  "theme_color": "#2f6b3a",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
