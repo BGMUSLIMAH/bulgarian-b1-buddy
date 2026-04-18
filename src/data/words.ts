@@ -203,7 +203,7 @@ const daily: WT[] = [
   ["вятър", "wind", "Вятърът е силен днес.", "The wind is strong today."],
   ["облак", "cloud", "Облаците са тъмни.", "The clouds are dark."],
   ["топло", "warm", "Днес е топло навън.", "It's warm outside today."],
-  ["студено", "cold", "Зимата е студена в Софи�.", "Winter is cold in Sofia."],
+  ["студено", "cold", "Зимата е студена в София.", "Winter is cold in Sofia."],
   ["горещо", "hot", "През август е много горещо.", "In August it's very hot."],
   ["щастлив", "happy", "Много съм щастлив днес.", "I'm very happy today."],
   ["тъжен", "sad", "Защо си тъжен?", "Why are you sad?"],
@@ -382,7 +382,7 @@ const mechanical: WT[] = [
 
 const healthcare: WT[] = [
   ["лекар", "doctor", "Лекарят пристига скоро.", "The doctor is arriving soon."],
-  ["сестра", "nurse", "Сестрата ще ви прегледа.", "The nurse will examine you."],
+  ["сестра (медицинска)", "nurse", "Сестрата ще ви прегледа.", "The nurse will examine you."],
   ["медицинска сестра", "nurse (formal)", "Медицинската сестра е много мила.", "The nurse is very kind."],
   ["болница", "hospital", "Болницата е близо до центъра.", "The hospital is near the center."],
   ["клиника", "clinic", "Клиниката отваря в осем.", "The clinic opens at eight."],
