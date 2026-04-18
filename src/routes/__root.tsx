@@ -32,10 +32,14 @@ export const Route = createRootRoute({
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Bulgarian Trainer B1 — Learn real-life & technical Bulgarian" },
       { name: "description", content: "Reach B1 Bulgarian with vocabulary, verbs, quizzes, listening, speaking, reading, and a full evaluation system." },
-      { property: "og:title", content: "Bulgarian Trainer B1" },
-      { property: "og:description", content: "Real-life and mechanical Bulgarian, from beginner to B1." },
+      { property: "og:title", content: "Bulgarian Trainer B1 — Learn real-life & technical Bulgarian" },
+      { property: "og:description", content: "Reach B1 Bulgarian with vocabulary, verbs, quizzes, listening, speaking, reading, and a full evaluation system." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      { name: "twitter:title", content: "Bulgarian Trainer B1 — Learn real-life & technical Bulgarian" },
+      { name: "twitter:description", content: "Reach B1 Bulgarian with vocabulary, verbs, quizzes, listening, speaking, reading, and a full evaluation system." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/43aa8449-0677-49bc-8658-d83987d2932b/id-preview-1418d7fc--ce02234b-5056-4f16-ab09-28865c57b06e.lovable.app-1776525686241.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/43aa8449-0677-49bc-8658-d83987d2932b/id-preview-1418d7fc--ce02234b-5056-4f16-ab09-28865c57b06e.lovable.app-1776525686241.png" },
     ],
     links: [
       {
