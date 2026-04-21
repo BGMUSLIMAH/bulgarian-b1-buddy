@@ -309,8 +309,63 @@ const RAW: string[][] = [
   ["прекарвам време", "to spend time (with)", "прекарвам време", "прекарваш време", "прекарва време", "прекарваме време", "прекарвате време", "прекарват време"],
   ["мечтая", "to dream", "мечтая", "мечтаеш", "мечтае", "мечтаем", "мечтаете", "мечтаят"],
   ["сънувам", "to dream (sleep)", "сънувам", "сънуваш", "сънува", "сънуваме", "сънувате", "сънуват"],
+  // --- Survival additions ---
+  ["подавам", "to submit", "подавам", "подаваш", "подава", "подаваме", "подавате", "подават"],
+  ["повтарям", "to repeat", "повтарям", "повтаряш", "повтаря", "повтаряме", "повтаряте", "повтарят"],
+  ["обаждам се", "to call / phone", "обаждам се", "обаждаш се", "обажда се", "обаждаме се", "обаждате се", "обаждат се"],
+  ["записвам се", "to register / sign up", "записвам се", "записваш се", "записва се", "записваме се", "записвате се", "записват се"],
+  ["наемам", "to rent", "наемам", "наемаш", "наема", "наемаме", "наемате", "наемат"],
 ];
 
 export const VERBS: Verb[] = RAW.map((r) => ({
   inf: r[0], en: r[1], az: r[2], ti: r[3], toj: r[4], nie: r[5], vie: r[6], te: r[7],
 }));
+
+// ---------------- Past + Future tense for top high-frequency verbs ----------------
+// Past = минало свършено (aorist), 1st person singular form (-ах/-ях/-их/-ох).
+// Future = ще + present 1sg (always written as two words).
+// Hand-curated for the most useful 30 verbs. Stored in a separate map keyed by
+// the infinitive ("inf" column) so the rest of the verb data stays untouched.
+export interface VerbTense {
+  past1sg: string;   // 1sg aorist e.g. "бях", "имах", "купих"
+  future1sg: string; // ще + present 1sg e.g. "ще бъда" / "ще съм"
+}
+
+export const VERB_TENSES: Record<string, VerbTense> = {
+  "съм":          { past1sg: "бях",         future1sg: "ще бъда" },
+  "имам":         { past1sg: "имах",        future1sg: "ще имам" },
+  "нямам":        { past1sg: "нямах",       future1sg: "ще нямам" },
+  "мога":         { past1sg: "можах",       future1sg: "ще мога" },
+  "искам":        { past1sg: "исках",       future1sg: "ще искам" },
+  "знам":         { past1sg: "знаех",       future1sg: "ще знам" },
+  "говоря":       { past1sg: "говорих",     future1sg: "ще говоря" },
+  "казвам":       { past1sg: "казах",       future1sg: "ще кажа" },
+  "питам":        { past1sg: "питах",       future1sg: "ще питам" },
+  "разбирам":     { past1sg: "разбрах",     future1sg: "ще разбера" },
+  "слушам":       { past1sg: "слушах",      future1sg: "ще слушам" },
+  "пиша":         { past1sg: "писах",       future1sg: "ще пиша" },
+  "чета":         { past1sg: "четох",       future1sg: "ще чета" },
+  "отивам":       { past1sg: "отидох",      future1sg: "ще отида" },
+  "идвам":        { past1sg: "дойдох",      future1sg: "ще дойда" },
+  "връщам се":    { past1sg: "върнах се",   future1sg: "ще се върна" },
+  "живея":        { past1sg: "живях",       future1sg: "ще живея" },
+  "работя":       { past1sg: "работих",     future1sg: "ще работя" },
+  "правя":        { past1sg: "направих",    future1sg: "ще направя" },
+  "ям":           { past1sg: "ядох",        future1sg: "ще ям" },
+  "пия":          { past1sg: "пих",         future1sg: "ще пия" },
+  "купувам":      { past1sg: "купих",       future1sg: "ще купя" },
+  "плащам":       { past1sg: "платих",      future1sg: "ще платя" },
+  "виждам":       { past1sg: "видях",       future1sg: "ще видя" },
+  "чакам":        { past1sg: "чаках",       future1sg: "ще чакам" },
+  "уча":          { past1sg: "учих",        future1sg: "ще уча" },
+  "обичам":       { past1sg: "обичах",      future1sg: "ще обичам" },
+  "подписвам":    { past1sg: "подписах",    future1sg: "ще подпиша" },
+  "попълвам":     { past1sg: "попълних",    future1sg: "ще попълня" },
+  "получавам":    { past1sg: "получих",     future1sg: "ще получа" },
+  "обаждам се":   { past1sg: "обадих се",   future1sg: "ще се обадя" },
+  "наемам":       { past1sg: "наех",        future1sg: "ще наема" },
+};
+
+export function hasTenses(inf: string): boolean {
+  return inf in VERB_TENSES;
+}
