@@ -2,19 +2,19 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { WORDS } from "@/data/words";
 import { VERBS } from "@/data/verbs";
-import { loadStats, type Stats } from "@/lib/store";
+import { loadStats, masteredCount, type Stats } from "@/lib/store";
 
 export const Route = createFileRoute("/")({ component: Dashboard });
 
 const TILES = [
-  { to: "/words", title: "Words", desc: "750+ Bulgarian words across 11 life & career topics", emoji: "📚" },
-  { to: "/verbs", title: "Verbs", desc: "200+ verbs with full present-tense conjugations", emoji: "🔤" },
+  { to: "/words", title: "Words", desc: "Bulgarian vocabulary across 11 life & career topics", emoji: "📚" },
+  { to: "/verbs", title: "Verbs", desc: "Verbs with present, past & future tense", emoji: "🔤" },
   { to: "/quiz", title: "Practice Quiz", desc: "EN → BG multiple choice, instant feedback", emoji: "🎯" },
   { to: "/daily", title: "Daily Session", desc: "10–20 mixed questions for daily training", emoji: "🗓️" },
   { to: "/listening", title: "Listening", desc: "Hear Bulgarian and pick the right answer", emoji: "🎧" },
   { to: "/speaking", title: "Speaking", desc: "Listen and repeat aloud", emoji: "🎤" },
   { to: "/reading", title: "Reading", desc: "Useful sentences with hidden translation", emoji: "📖" },
-  { to: "/evaluation", title: "Evaluation", desc: "20+ questions, get your CEFR level", emoji: "🏆" },
+  { to: "/evaluation", title: "Evaluation", desc: "Multi-section test, get your CEFR level", emoji: "🏆" },
   { to: "/progress", title: "Progress", desc: "Track answers and most practiced words", emoji: "📈" },
 ] as const;
 
@@ -23,6 +23,7 @@ function Dashboard() {
   useEffect(() => { setStats(loadStats()); }, []);
   const total = stats ? stats.correct + stats.wrong : 0;
   const acc = total > 0 ? Math.round((stats!.correct / total) * 100) : 0;
+  const mastered = stats ? masteredCount(stats) : 0;
 
   return (
     <div className="space-y-8">
@@ -30,14 +31,15 @@ function Dashboard() {
         <p className="text-sm uppercase tracking-widest text-primary">Bulgarian · B1 Track</p>
         <h1 className="mt-2 text-4xl font-bold sm:text-5xl">Здравей! Let's reach <span className="text-primary">B1</span>.</h1>
         <p className="mt-3 max-w-2xl text-muted-foreground">
-          A focused trainer for real-life and mechanical/technical Bulgarian. Vocabulary, conjugations,
+          A focused trainer for real-life and aviation/mechanical Bulgarian. Vocabulary, conjugations,
           listening, speaking, reading, and a level evaluation — all offline-ready.
         </p>
-        <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-5">
           <Stat label="Words" value={WORDS.length} />
           <Stat label="Verbs" value={VERBS.length} />
           <Stat label="Answers" value={total} />
           <Stat label="Accuracy" value={`${acc}%`} />
+          <Stat label="⭐ Mastered" value={mastered} />
         </div>
       </section>
 

@@ -1,8 +1,9 @@
 // Shared layout with top navigation — editorial warm theme.
 import { Link, Outlet } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { loadStats, levelFromXP } from "@/lib/store";
+import { loadStats, levelFromXP, masteredCount } from "@/lib/store";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { InstallButton } from "@/components/InstallButton";
 
 const TABS = [
   { to: "/", label: "Home" },
@@ -20,15 +21,16 @@ const TABS = [
 export function Layout() {
   const [streak, setStreak] = useState(0);
   const [level, setLevel] = useState(1);
+  const [mastered, setMastered] = useState(0);
   useEffect(() => {
     const s = loadStats();
     setStreak(s.streakDays);
     setLevel(levelFromXP(s.xp).level);
+    setMastered(masteredCount(s));
   }, []);
 
   return (
     <div className="min-h-screen text-foreground">
-      {/* Inject Google fonts once */}
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
       <link
@@ -58,12 +60,19 @@ export function Layout() {
             ))}
           </nav>
 
-          <div className="ml-auto flex items-center gap-2 text-xs">
+          <div className="ml-auto flex flex-wrap items-center gap-2 text-xs">
+            <InstallButton />
             <span
               title="Daily streak"
               className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-2.5 py-1 font-medium"
             >
               🔥 <span>{streak}</span>
+            </span>
+            <span
+              title="Mastered words"
+              className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-2.5 py-1 font-medium"
+            >
+              ⭐ <span>{mastered}</span>
             </span>
             <span
               title="Level"

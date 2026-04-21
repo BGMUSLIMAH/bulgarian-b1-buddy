@@ -1,7 +1,8 @@
 // Reusable multiple-choice quiz card.
-// Question shown in English (or as provided), 4 Bulgarian options.
-// Correct answer is hidden until the user clicks; then green/red feedback appears.
-import { useEffect, useState } from "react";
+// Shows question + 4 options. After picking, displays clear green/red feedback
+// for at least 1.5s, then auto-advances. The card NEVER unmounts to a blank
+// screen — the same card stays mounted between questions and just swaps content.
+import { useEffect, useRef, useState } from "react";
 import { recordAnswer, shuffle } from "@/lib/store";
 
 export interface QuizQuestion {
@@ -9,7 +10,8 @@ export interface QuizQuestion {
   correct: string;         // Bulgarian correct answer
   distractors: string[];   // 3 wrong Bulgarian options
   key: string;             // tracking key
-  hint?: string;           // optional small hint under prompt
+  hint?: string;           // optional small hint (verbs grammar etc.) — hidden by default
+  category?: string;       // for stats tracking by category
 }
 
 interface Props {
@@ -20,22 +22,52 @@ interface Props {
   total: number;
 }
 
+const FEEDBACK_HOLD_MS = 1500;
+
 export function QuizCard({ question, onAnswered, onNext, index, total }: Props) {
   const [options, setOptions] = useState<string[]>([]);
   const [picked, setPicked] = useState<string | null>(null);
+  const [showHint, setShowHint] = useState(false);
+  const advanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setOptions(shuffle([question.correct, ...question.distractors]));
     setPicked(null);
+    setShowHint(false);
+    if (advanceTimer.current) {
+      clearTimeout(advanceTimer.current);
+      advanceTimer.current = null;
+    }
   }, [question]);
+
+  useEffect(() => {
+    return () => {
+      if (advanceTimer.current) clearTimeout(advanceTimer.current);
+    };
+  }, []);
 
   function pick(opt: string) {
     if (picked) return;
     setPicked(opt);
     const correct = opt === question.correct;
-    recordAnswer(question.key, correct);
+    recordAnswer(question.key, correct, question.category);
     onAnswered(correct);
+    // Hold colored feedback ≥ 1.5s, then auto-advance.
+    advanceTimer.current = setTimeout(() => {
+      onNext();
+    }, FEEDBACK_HOLD_MS);
   }
+
+  function skipWait() {
+    if (!picked) return;
+    if (advanceTimer.current) {
+      clearTimeout(advanceTimer.current);
+      advanceTimer.current = null;
+    }
+    onNext();
+  }
+
+  const isLast = index + 1 === total;
 
   return (
     <div className="rounded-xl border border-border bg-card p-6 shadow-lg">
@@ -44,7 +76,35 @@ export function QuizCard({ question, onAnswered, onNext, index, total }: Props) 
         <span className="font-mono">EN → BG</span>
       </div>
       <h2 className="mb-1 text-2xl font-semibold text-foreground">{question.prompt}</h2>
-      {question.hint && <p className="mb-4 text-sm text-muted-foreground">{question.hint}</p>}
+
+      {/* Hint toggle — hidden by default. Verb conjugation tables, grammar notes, etc. */}
+      {question.hint && (
+        <div className="mt-2">
+          {!showHint ? (
+            <button
+              onClick={() => setShowHint(true)}
+              className="rounded-full border border-border bg-secondary px-3 py-1 text-xs text-secondary-foreground hover:bg-accent"
+              type="button"
+            >
+              💡 Show Hint
+            </button>
+          ) : (
+            <div className="flex items-start gap-2 rounded-md border border-border bg-accent/40 px-3 py-2 text-sm text-foreground">
+              <span aria-hidden>💡</span>
+              <span className="flex-1">{question.hint}</span>
+              <button
+                onClick={() => setShowHint(false)}
+                className="text-xs text-muted-foreground hover:text-foreground"
+                type="button"
+                aria-label="Hide hint"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="mt-6 grid gap-3 sm:grid-cols-2">
         {options.map((opt) => {
           const isCorrect = opt === question.correct;
@@ -57,33 +117,39 @@ export function QuizCard({ question, onAnswered, onNext, index, total }: Props) 
             else cls += " opacity-60";
           }
           return (
-            <button key={opt} className={cls} onClick={() => pick(opt)} disabled={!!picked}>
+            <button key={opt} className={cls} onClick={() => pick(opt)} disabled={!!picked} type="button">
               {opt}
             </button>
           );
         })}
       </div>
-      {picked && (
-        <div className="mt-6 flex items-center justify-between">
-          <p className="text-sm">
-            {picked === question.correct ? (
-              <span className="text-green-400">✓ Correct!</span>
-            ) : (
-              <>
-                <span className="text-red-400">✗ Wrong.</span>{" "}
-                <span className="text-muted-foreground">Correct answer: </span>
-                <span className="font-semibold text-foreground">{question.correct}</span>
-              </>
-            )}
-          </p>
-          <button
-            onClick={onNext}
-            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-          >
-            {index + 1 === total ? "Finish" : "Next →"}
-          </button>
-        </div>
-      )}
+      {/* Feedback area — always reserves space so layout doesn't shift / blank */}
+      <div className="mt-6 flex min-h-[3rem] items-center justify-between">
+        {picked ? (
+          <>
+            <p className="text-sm">
+              {picked === question.correct ? (
+                <span className="font-medium text-green-400">✓ Correct!</span>
+              ) : (
+                <>
+                  <span className="font-medium text-red-400">✗ Wrong.</span>{" "}
+                  <span className="text-muted-foreground">Correct answer: </span>
+                  <span className="font-semibold text-foreground">{question.correct}</span>
+                </>
+              )}
+            </p>
+            <button
+              onClick={skipWait}
+              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+              type="button"
+            >
+              {isLast ? "Finish" : "Next →"}
+            </button>
+          </>
+        ) : (
+          <p className="text-xs text-muted-foreground">Pick an answer.</p>
+        )}
+      </div>
     </div>
   );
 }
