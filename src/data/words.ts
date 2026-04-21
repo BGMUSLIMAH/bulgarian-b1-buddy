@@ -224,6 +224,20 @@ const daily: WT[] = [
   ["лесен", "easy", "Това е лесен въпрос.", "This is an easy question."],
   ["труден", "difficult", "Тестът беше труден.", "The test was difficult."],
   ["важен", "important", "Това е много важен документ.", "This is a very important document."],
+  // --- Daily life / market additions ---
+  ["колко струва?", "how much does it cost?", "Колко струва това?", "How much does this cost?"],
+  ["имате ли...?", "do you have...?", "Имате ли хляб?", "Do you have bread?"],
+  ["дайте ми", "give me (formal)", "Дайте ми един килограм.", "Give me one kilogram."],
+  ["килограм", "kilogram", "Един килограм домати, моля.", "One kilogram of tomatoes, please."],
+  ["половин килограм", "half a kilo", "Половин килограм сирене.", "Half a kilo of cheese."],
+  ["пакет", "packet / bag", "Един пакет ориз.", "One packet of rice."],
+  ["кутия", "box", "Кутия мляко, моля.", "A box of milk, please."],
+  ["бутилка", "bottle", "Една бутилка вода.", "One bottle of water."],
+  ["ресто", "change (money back)", "Задръж рестото.", "Keep the change."],
+  ["касова бележка", "cash register receipt", "Дайте ми касова бележка.", "Give me a receipt."],
+  ["отстъпка", "discount", "Има ли отстъпка?", "Is there a discount?"],
+  ["разпродажба", "sale", "Магазинът е на разпродажба.", "The shop is having a sale."],
+  ["гаранция", "warranty", "Гаранцията е две години.", "The warranty is two years."],
 ];
 
 const work: WT[] = [
@@ -503,6 +517,15 @@ const it: WT[] = [
   ["скрипт", "script", "Скриптът се изпълнява автоматично.", "The script runs automatically."],
   ["език за програмиране", "programming language", "Кой език за програмиране ползваш?", "Which programming language do you use?"],
   ["изкуствен интелект", "artificial intelligence", "Изкуственият интелект се развива бързо.", "AI is developing fast."],
+  // --- Internet / telecom additions ---
+  ["абонамент", "subscription", "Абонаментът ми изтече.", "My subscription expired."],
+  ["инсталация", "installation", "Инсталацията е безплатна.", "Installation is free."],
+  ["рутер", "router", "Рестартирай рутера.", "Restart the router."],
+  ["мобилни данни", "mobile data", "Свърших мобилните данни.", "I ran out of mobile data."],
+  ["предплатена карта", "prepaid SIM", "Купих предплатена карта.", "I bought a prepaid SIM."],
+  ["прехвърляне на номер", "number transfer", "Поисках прехвърляне на номер.", "I requested a number transfer."],
+  ["прекъсване", "outage / interruption", "Има прекъсване в района.", "There is an outage in the area."],
+  ["фактура (телеком)", "invoice / bill", "Платих телефонната фактура.", "I paid the phone bill."],
 ];
 
 const hospitality: WT[] = [
@@ -585,6 +608,18 @@ const education: WT[] = [
   ["език (чужд)", "foreign language", "Уча два чужди езика.", "I study two foreign languages."],
   ["граматика", "grammar", "Българската граматика е сложна.", "Bulgarian grammar is complex."],
   ["речник", "dictionary", "Винаги нося речник.", "I always carry a dictionary."],
+  // --- University / education additions ---
+  ["студентска администрация", "student admin office", "Студентската администрация е затворена.", "The student admin office is closed."],
+  ["деканат", "faculty office (dean's)", "Отивам в деканата.", "I'm going to the dean's office."],
+  ["зачислявам се", "to enroll", "Зачислявам се в университета.", "I'm enrolling at the university."],
+  ["уверение", "certificate / confirmation letter", "Имам нужда от уверение.", "I need a certificate."],
+  ["студентска книжка", "student booklet / ID", "Покажи студентската книжка.", "Show your student ID."],
+  ["изпитна сесия", "exam session", "Изпитната сесия започва.", "The exam session is starting."],
+  ["академична справка", "academic transcript", "Поискай академична справка.", "Request an academic transcript."],
+  ["семестър", "semester", "Семестърът свършва скоро.", "The semester ends soon."],
+  ["такса обучение", "tuition fee", "Платих таксата за обучение.", "I paid the tuition fee."],
+  ["стипендия", "scholarship", "Получих стипендия.", "I got a scholarship."],
+  ["ректорат", "rector's office", "Ректоратът е в централната сграда.", "The rector's office is in the main building."],
 ];
 
 const transport: WT[] = [
@@ -644,6 +679,24 @@ const government: WT[] = [
   ["съд", "court", "Съдът се събира утре.", "The court convenes tomorrow."],
   ["полиция", "police", "Извиках полицията.", "I called the police."],
   ["полицай", "police officer", "Полицаят беше учтив.", "The officer was polite."],
+  // --- Services / administration additions ---
+  ["документ за самоличност", "identity document", "Покажете документ за самоличност.", "Show your identity document."],
+  ["разрешение за пребиваване", "residence permit", "Подновявам разрешението за пребиваване.", "I'm renewing my residence permit."],
+  ["временно пребиваване", "temporary residence", "Имам временно пребиваване.", "I have temporary residence."],
+  ["регистрация", "registration", "Регистрацията е задължителна.", "Registration is mandatory."],
+  ["подписвам", "to sign", "Подпиши тук, моля.", "Sign here, please."],
+  ["попълвам формуляр", "to fill in a form", "Попълни формуляра.", "Fill in the form."],
+  ["опашка", "queue / line", "Има голяма опашка.", "There is a long queue."],
+  ["чакалня", "waiting room", "Седни в чакалнята.", "Sit in the waiting room."],
+  ["служител", "officer / clerk", "Служителят ще ви помогне.", "The clerk will help you."],
+  ["гише", "counter / desk", "Отиди на гише номер три.", "Go to counter number three."],
+  ["срок", "deadline / validity period", "Срокът е следващата седмица.", "The deadline is next week."],
+  ["валиден", "valid", "Документът е валиден.", "The document is valid."],
+  ["изтекъл", "expired", "Паспортът ми е изтекъл.", "My passport is expired."],
+  ["копие", "copy", "Направи копие на документа.", "Make a copy of the document."],
+  ["нотариус", "notary", "Имаш нужда от нотариус.", "You need a notary."],
+  ["заверен превод", "certified translation", "Изисква се заверен превод.", "A certified translation is required."],
+  ["квитанция", "receipt", "Запази квитанцията.", "Keep the receipt."],
 ];
 
 const sports: WT[] = [
