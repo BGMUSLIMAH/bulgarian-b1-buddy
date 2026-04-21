@@ -145,9 +145,20 @@ export function levelFromXP(xp: number): LevelInfo {
   return { level: level + 1, title, current, next: need, pct };
 }
 
-// "Mastered" = 3+ correct streak in a row, never wrong in last 3 attempts
+// "Mastered" = answered correctly 3+ times overall (lifetime correct count).
+// Streak still tracked separately and shown with a star ⭐ on the progress page.
+export const MASTERY_THRESHOLD = 3;
 export function masteredCount(s: Stats): number {
-  return Object.values(s.perWord).filter((w) => w.streak >= 3).length;
+  return Object.values(s.perWord).filter((w) => w.correct >= MASTERY_THRESHOLD).length;
+}
+
+// Validate a question/answer pair — rejects empty, underscore-only, or whitespace-only strings.
+export function isValidText(s: unknown): s is string {
+  if (typeof s !== "string") return false;
+  const trimmed = s.trim();
+  if (trimmed.length === 0) return false;
+  if (/^_+$/.test(trimmed)) return false;
+  return true;
 }
 
 // ---------------- TTS ----------------
