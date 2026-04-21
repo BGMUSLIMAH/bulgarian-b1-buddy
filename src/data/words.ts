@@ -287,6 +287,17 @@ const work: WT[] = [
   ["доклад", "report (formal)", "Докладът е готов.", "The report is ready."],
   ["анализ", "analysis", "Анализът показва ръст.", "The analysis shows growth."],
   ["партньор", "partner", "Той е надежден партньор.", "He is a reliable partner."],
+  // --- Housing / rent (slotted into work for now since no housing category) ---
+  ["наемодател", "landlord", "Наемодателят е любезен.", "The landlord is friendly."],
+  ["наемател", "tenant", "Наемателят плаща навреме.", "The tenant pays on time."],
+  ["договор за наем", "rental contract", "Подписах договор за наем.", "I signed a rental contract."],
+  ["депозит", "deposit", "Платих депозит за две заплати.", "I paid two months' salary as deposit."],
+  ["комунални услуги", "utilities", "Комуналните услуги не са включени.", "Utilities are not included."],
+  ["парно", "central heating", "Парното не работи.", "The central heating isn't working."],
+  ["месечен наем", "monthly rent", "Месечният наем е 800 лева.", "Monthly rent is 800 leva."],
+  ["общежитие", "dormitory", "Живея в общежитие.", "I live in a dormitory."],
+  ["авансово", "in advance", "Плащам авансово.", "I pay in advance."],
+  ["повреда", "damage / fault", "Има повреда в банята.", "There is damage in the bathroom."],
 ];
 
 const mechanical: WT[] = [
@@ -445,6 +456,13 @@ const healthcare: WT[] = [
   ["очила", "glasses (eyeglasses)", "Не виждам без очила.", "I can't see without glasses."],
   ["оптика", "optician's", "Оптиката е до банката.", "The optician's is next to the bank."],
   ["слух", "hearing", "Слухът ми не е добър.", "My hearing isn't good."],
+  // --- Survival additions ---
+  ["здравна осигуровка", "health insurance", "Имам здравна осигуровка.", "I have health insurance."],
+  ["здравна каса", "national health fund (NHIF)", "Здравната каса покрива разходите.", "The health fund covers the costs."],
+  ["личен лекар", "GP / family doctor", "Личният ми лекар е в София.", "My family doctor is in Sofia."],
+  ["специалист", "specialist", "Имам час при специалист.", "I have an appointment with a specialist."],
+  ["болничен (лист)", "sick leave (note)", "Лекарят ми даде болничен.", "The doctor gave me sick leave."],
+  ["симптом", "symptom", "Какви са симптомите ти?", "What are your symptoms?"],
 ];
 
 const it: WT[] = [
