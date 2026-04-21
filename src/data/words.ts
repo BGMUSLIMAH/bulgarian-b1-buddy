@@ -405,6 +405,8 @@ const mechanical: WT[] = [
   ["хидравличен крик", "hydraulic jack", "Използвай хидравличния крик.", "Use the hydraulic jack."],
   ["стремянка", "aircraft steps / stand", "Постави стремянката до самолета.", "Place the steps next to the aircraft."],
 ];
+
+const healthcare: WT[] = [
   ["лекар", "doctor", "Лекарят пристига скоро.", "The doctor is arriving soon."],
   ["сестра (медицинска)", "nurse", "Сестрата ще ви прегледа.", "The nurse will examine you."],
   ["медицинска сестра", "nurse (formal)", "Медицинската сестра е много мила.", "The nurse is very kind."],
