@@ -2,7 +2,7 @@
 // Shows question + 4 options. After picking, displays clear green/red feedback
 // for at least 1.5s, then auto-advances. The card NEVER unmounts to a blank
 // screen — the same card stays mounted between questions and just swaps content.
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { recordAnswer, shuffle } from "@/lib/store";
 
 export interface QuizQuestion {
@@ -22,29 +22,16 @@ interface Props {
   total: number;
 }
 
-const FEEDBACK_HOLD_MS = 1500;
-
 export function QuizCard({ question, onAnswered, onNext, index, total }: Props) {
   const [options, setOptions] = useState<string[]>([]);
   const [picked, setPicked] = useState<string | null>(null);
   const [showHint, setShowHint] = useState(false);
-  const advanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setOptions(shuffle([question.correct, ...question.distractors]));
     setPicked(null);
     setShowHint(false);
-    if (advanceTimer.current) {
-      clearTimeout(advanceTimer.current);
-      advanceTimer.current = null;
-    }
   }, [question]);
-
-  useEffect(() => {
-    return () => {
-      if (advanceTimer.current) clearTimeout(advanceTimer.current);
-    };
-  }, []);
 
   function pick(opt: string) {
     if (picked) return;
@@ -52,18 +39,11 @@ export function QuizCard({ question, onAnswered, onNext, index, total }: Props) 
     const correct = opt === question.correct;
     recordAnswer(question.key, correct, question.category);
     onAnswered(correct);
-    // Hold colored feedback ≥ 1.5s, then auto-advance.
-    advanceTimer.current = setTimeout(() => {
-      onNext();
-    }, FEEDBACK_HOLD_MS);
+    // No auto-advance — feedback (green/red) stays visible until user clicks Next.
   }
 
-  function skipWait() {
+  function goNext() {
     if (!picked) return;
-    if (advanceTimer.current) {
-      clearTimeout(advanceTimer.current);
-      advanceTimer.current = null;
-    }
     onNext();
   }
 
@@ -139,7 +119,7 @@ export function QuizCard({ question, onAnswered, onNext, index, total }: Props) 
               )}
             </p>
             <button
-              onClick={skipWait}
+              onClick={goNext}
               className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
               type="button"
             >
