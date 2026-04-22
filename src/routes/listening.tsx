@@ -72,8 +72,8 @@ function ListeningPage() {
             const isPicked = opt === picked;
             let cls = "rounded-lg border border-border bg-secondary px-4 py-3 text-left text-secondary-foreground hover:bg-accent";
             if (picked) {
-              if (isCorrect) cls += " !border-green-500 !bg-green-500/20 !text-green-200";
-              else if (isPicked) cls += " !border-red-500 !bg-red-500/20 !text-red-200";
+              if (isCorrect) cls = cls.replace("bg-secondary", "bg-green-500/20") + " border-green-500 text-green-200";
+              else if (isPicked) cls = cls.replace("bg-secondary", "bg-red-500/20") + " border-red-500 text-red-200";
               else cls += " opacity-60";
             }
             return (
