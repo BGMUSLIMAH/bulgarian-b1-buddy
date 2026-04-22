@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { VERBS, VERB_TENSES, hasTenses, type Verb } from "@/data/verbs";
+import { VERBS, VERB_TENSES, hasTenses, type Verb, type VerbTenseSet } from "@/data/verbs";
 import { QuizRunner } from "@/components/QuizRunner";
 import { buildVerbQuiz } from "@/lib/quiz";
 
@@ -84,23 +84,38 @@ function VerbCard({ v }: { v: Verb }) {
       )}
 
       {tense === "past" && tenses && (
-        <div className="mt-3 space-y-1 text-sm">
-          <p className="text-xs uppercase tracking-wider text-muted-foreground">
-            Минало свършено (1st person sg)
+        <div className="mt-3">
+          <p className="mb-1 text-xs uppercase tracking-wider text-muted-foreground">
+            Минало свършено (aorist)
           </p>
-          <p className="font-medium text-foreground">аз {tenses.past1sg}</p>
-          <p className="text-xs text-muted-foreground">Endings pattern: -ах / -ях / -их / -ох</p>
+          <TenseTable t={tenses.past} />
+          <p className="mt-2 text-xs text-muted-foreground">Endings pattern: -ах / -ях / -их / -ох</p>
         </div>
       )}
 
       {tense === "future" && tenses && (
-        <div className="mt-3 space-y-1 text-sm">
-          <p className="text-xs uppercase tracking-wider text-muted-foreground">Бъдеще време (1st person sg)</p>
-          <p className="font-medium text-foreground">аз {tenses.future1sg}</p>
-          <p className="text-xs text-muted-foreground">Future = ще + present 1sg form.</p>
+        <div className="mt-3">
+          <p className="mb-1 text-xs uppercase tracking-wider text-muted-foreground">Бъдеще време</p>
+          <TenseTable t={tenses.future} />
+          <p className="mt-2 text-xs text-muted-foreground">Future = ще + present forms.</p>
         </div>
       )}
     </div>
+  );
+}
+
+function TenseTable({ t }: { t: VerbTenseSet }) {
+  return (
+    <table className="w-full text-sm">
+      <tbody>
+        <Row p="аз" v={t.az} />
+        <Row p="ти" v={t.ti} />
+        <Row p="той/тя" v={t.toj} />
+        <Row p="ние" v={t.nie} />
+        <Row p="вие" v={t.vie} />
+        <Row p="те" v={t.te} />
+      </tbody>
+    </table>
   );
 }
 
