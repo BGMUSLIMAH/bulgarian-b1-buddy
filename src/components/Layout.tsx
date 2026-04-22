@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { loadStats, levelFromXP, masteredCount } from "@/lib/store";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { InstallButton } from "@/components/InstallButton";
+import { CookieBanner } from "@/components/CookieBanner";
 
 const TABS = [
   { to: "/", label: "Home" },
@@ -89,9 +90,16 @@ export function Layout() {
         <Outlet />
       </main>
 
-      <footer className="border-t border-border py-6 text-center text-xs text-muted-foreground">
-        Български Trainer · Real-life & technical vocabulary · Progress saved on this device
+      <footer className="mt-12 border-t border-border bg-background/50">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-4 py-6 text-xs text-muted-foreground sm:flex-row">
+          <p>© 2026 Български Trainer · Built for foreigners surviving Bulgaria 🇧🇬</p>
+          <nav className="flex items-center gap-4">
+            <Link to="/terms" className="hover:text-foreground">Terms</Link>
+            <Link to="/privacy" className="hover:text-foreground">Privacy</Link>
+          </nav>
+        </div>
       </footer>
+      <CookieBanner />
     </div>
   );
 }

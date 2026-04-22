@@ -86,15 +86,24 @@ export function InstallButton() {
   }
 
   if (installed) return null;
-  // Show button always (per spec) on non-iOS only when prompt is captured;
-  // on iOS show button that triggers the instructions banner.
-  const visible = canPrompt || isIOS();
-  if (!visible) return null;
+  // Button is ALWAYS visible in the navbar. If no prompt is captured yet,
+  // clicking shows a hint banner (or iOS instructions on iOS).
+
+  async function handleClick() {
+    if (canPrompt && promptRef.current) {
+      await handleInstall();
+      return;
+    }
+    // No prompt available — show iOS instructions on iOS, generic hint elsewhere.
+    setShowIosBanner(true);
+  }
+
+  const iosMode = isIOS();
 
   return (
     <>
       <button
-        onClick={handleInstall}
+        onClick={handleClick}
         title="Install Bulgarian Trainer as an app"
         className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
         type="button"
@@ -108,7 +117,11 @@ export function InstallButton() {
         >
           <span className="text-lg" aria-hidden>📲</span>
           <p className="flex-1 text-foreground">
-            To install on iPhone: tap <span className="font-semibold">Share</span> → <span className="font-semibold">Add to Home Screen</span>.
+            {iosMode ? (
+              <>To install on iPhone: tap <span className="font-semibold">Share</span> → <span className="font-semibold">Add to Home Screen</span>.</>
+            ) : (
+              <>To install: open your browser menu and choose <span className="font-semibold">Install app</span> or <span className="font-semibold">Add to Home Screen</span>.</>
+            )}
           </p>
           <button
             onClick={dismissIos}
