@@ -11,10 +11,12 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WordsRouteImport } from './routes/words'
 import { Route as VerbsRouteImport } from './routes/verbs'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SpeakingRouteImport } from './routes/speaking'
 import { Route as ReadingRouteImport } from './routes/reading'
 import { Route as QuizRouteImport } from './routes/quiz'
 import { Route as ProgressRouteImport } from './routes/progress'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ListeningRouteImport } from './routes/listening'
 import { Route as EvaluationRouteImport } from './routes/evaluation'
 import { Route as DailyRouteImport } from './routes/daily'
@@ -28,6 +30,11 @@ const WordsRoute = WordsRouteImport.update({
 const VerbsRoute = VerbsRouteImport.update({
   id: '/verbs',
   path: '/verbs',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SpeakingRoute = SpeakingRouteImport.update({
@@ -48,6 +55,11 @@ const QuizRoute = QuizRouteImport.update({
 const ProgressRoute = ProgressRouteImport.update({
   id: '/progress',
   path: '/progress',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ListeningRoute = ListeningRouteImport.update({
@@ -76,10 +88,12 @@ export interface FileRoutesByFullPath {
   '/daily': typeof DailyRoute
   '/evaluation': typeof EvaluationRoute
   '/listening': typeof ListeningRoute
+  '/privacy': typeof PrivacyRoute
   '/progress': typeof ProgressRoute
   '/quiz': typeof QuizRoute
   '/reading': typeof ReadingRoute
   '/speaking': typeof SpeakingRoute
+  '/terms': typeof TermsRoute
   '/verbs': typeof VerbsRoute
   '/words': typeof WordsRoute
 }
@@ -88,10 +102,12 @@ export interface FileRoutesByTo {
   '/daily': typeof DailyRoute
   '/evaluation': typeof EvaluationRoute
   '/listening': typeof ListeningRoute
+  '/privacy': typeof PrivacyRoute
   '/progress': typeof ProgressRoute
   '/quiz': typeof QuizRoute
   '/reading': typeof ReadingRoute
   '/speaking': typeof SpeakingRoute
+  '/terms': typeof TermsRoute
   '/verbs': typeof VerbsRoute
   '/words': typeof WordsRoute
 }
@@ -101,10 +117,12 @@ export interface FileRoutesById {
   '/daily': typeof DailyRoute
   '/evaluation': typeof EvaluationRoute
   '/listening': typeof ListeningRoute
+  '/privacy': typeof PrivacyRoute
   '/progress': typeof ProgressRoute
   '/quiz': typeof QuizRoute
   '/reading': typeof ReadingRoute
   '/speaking': typeof SpeakingRoute
+  '/terms': typeof TermsRoute
   '/verbs': typeof VerbsRoute
   '/words': typeof WordsRoute
 }
@@ -115,10 +133,12 @@ export interface FileRouteTypes {
     | '/daily'
     | '/evaluation'
     | '/listening'
+    | '/privacy'
     | '/progress'
     | '/quiz'
     | '/reading'
     | '/speaking'
+    | '/terms'
     | '/verbs'
     | '/words'
   fileRoutesByTo: FileRoutesByTo
@@ -127,10 +147,12 @@ export interface FileRouteTypes {
     | '/daily'
     | '/evaluation'
     | '/listening'
+    | '/privacy'
     | '/progress'
     | '/quiz'
     | '/reading'
     | '/speaking'
+    | '/terms'
     | '/verbs'
     | '/words'
   id:
@@ -139,10 +161,12 @@ export interface FileRouteTypes {
     | '/daily'
     | '/evaluation'
     | '/listening'
+    | '/privacy'
     | '/progress'
     | '/quiz'
     | '/reading'
     | '/speaking'
+    | '/terms'
     | '/verbs'
     | '/words'
   fileRoutesById: FileRoutesById
@@ -152,10 +176,12 @@ export interface RootRouteChildren {
   DailyRoute: typeof DailyRoute
   EvaluationRoute: typeof EvaluationRoute
   ListeningRoute: typeof ListeningRoute
+  PrivacyRoute: typeof PrivacyRoute
   ProgressRoute: typeof ProgressRoute
   QuizRoute: typeof QuizRoute
   ReadingRoute: typeof ReadingRoute
   SpeakingRoute: typeof SpeakingRoute
+  TermsRoute: typeof TermsRoute
   VerbsRoute: typeof VerbsRoute
   WordsRoute: typeof WordsRoute
 }
@@ -174,6 +200,13 @@ declare module '@tanstack/react-router' {
       path: '/verbs'
       fullPath: '/verbs'
       preLoaderRoute: typeof VerbsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/speaking': {
@@ -202,6 +235,13 @@ declare module '@tanstack/react-router' {
       path: '/progress'
       fullPath: '/progress'
       preLoaderRoute: typeof ProgressRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/listening': {
@@ -240,10 +280,12 @@ const rootRouteChildren: RootRouteChildren = {
   DailyRoute: DailyRoute,
   EvaluationRoute: EvaluationRoute,
   ListeningRoute: ListeningRoute,
+  PrivacyRoute: PrivacyRoute,
   ProgressRoute: ProgressRoute,
   QuizRoute: QuizRoute,
   ReadingRoute: ReadingRoute,
   SpeakingRoute: SpeakingRoute,
+  TermsRoute: TermsRoute,
   VerbsRoute: VerbsRoute,
   WordsRoute: WordsRoute,
 }
