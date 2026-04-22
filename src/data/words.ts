@@ -14,7 +14,10 @@ export type Category =
   | "education"
   | "transport"
   | "government"
-  | "sports";
+  | "sports"
+  | "numbers"
+  | "food"
+  | "market";
 
 export interface Word {
   bg: string;
@@ -36,6 +39,9 @@ export const CATEGORY_META: Record<Category, { label: string; emoji: string }> =
   transport: { label: "Transport & logistics", emoji: "🚚" },
   government: { label: "Government & paperwork", emoji: "🏛️" },
   sports: { label: "Sports & hobbies", emoji: "⚽" },
+  numbers: { label: "Numbers", emoji: "🔢" },
+  food: { label: "Fruits & vegetables", emoji: "🍎" },
+  market: { label: "Market & shopping", emoji: "🛒" },
 };
 
 type WT = [string, string, string, string];
