@@ -211,6 +211,8 @@ function browserSpeak(text: string) {
   }
 }
 
+let audioContext: AudioContext | null = null;
+
 export function speak(text: string) {
   if (typeof window === "undefined") return;
   // Stop anything currently playing
@@ -220,6 +222,16 @@ export function speak(text: string) {
     currentAudio = null;
   }
   if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+
+  // Resume or create AudioContext to satisfy desktop autoplay policy
+  try {
+    if (!audioContext) {
+      audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    }
+    if (audioContext.state === "suspended") {
+      audioContext.resume();
+    }
+  } catch { /* ignore */ }
 
   const url = googleTtsUrl(text);
   const cached = ttsCache.get(text);
