@@ -92,8 +92,8 @@ export function QuizCard({ question, onAnswered, onNext, index, total }: Props) 
           let cls =
             "rounded-lg border border-border bg-secondary px-4 py-3 text-left text-base text-secondary-foreground transition-colors hover:bg-accent disabled:cursor-not-allowed";
           if (picked) {
-            if (isCorrect) cls += " !border-green-500 !bg-green-500/20 !text-green-200";
-            else if (isPicked) cls += " !border-red-500 !bg-red-500/20 !text-red-200";
+            if (isCorrect) cls = cls.replace("bg-secondary", "") + " border-green-500 bg-green-500/20 text-green-200";
+            else if (isPicked) cls = cls.replace("bg-secondary", "") + " border-red-500 bg-red-500/20 text-red-200";
             else cls += " opacity-60";
           }
           return (
