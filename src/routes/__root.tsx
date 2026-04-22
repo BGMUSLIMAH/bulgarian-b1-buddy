@@ -94,12 +94,21 @@ const SW_REGISTER = `
 })();
 `;
 
+const UMAMI_ID = import.meta.env.VITE_UMAMI_WEBSITE_ID;
+const UMAMI_URL = import.meta.env.VITE_UMAMI_URL;
+
 function RootComponent() {
   return (
     <>
       <Layout />
       <script dangerouslySetInnerHTML={{ __html: SW_REGISTER }} />
+      {UMAMI_ID && UMAMI_URL && (
+        <script
+          defer
+          src={UMAMI_URL}
+          data-website-id={UMAMI_ID}
+        />
+      )}
     </>
   );
 }
-
