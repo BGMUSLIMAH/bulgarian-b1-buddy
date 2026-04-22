@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { loadStats, levelFromXP, masteredCount } from "@/lib/store";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { InstallButton } from "@/components/InstallButton";
+import { CookieBanner } from "@/components/CookieBanner";
 
 const TABS = [
   { to: "/", label: "Home" },
