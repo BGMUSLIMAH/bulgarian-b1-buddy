@@ -215,48 +215,10 @@ let audioContext: AudioContext | null = null;
 
 export function speak(text: string) {
   if (typeof window === "undefined") return;
-  // Stop anything currently playing
   if (currentAudio) {
     currentAudio.pause();
     currentAudio.currentTime = 0;
     currentAudio = null;
   }
-  if ("speechSynthesis" in window) window.speechSynthesis.cancel();
-
-  // Resume or create AudioContext to satisfy desktop autoplay policy
-  try {
-    if (!audioContext) {
-      audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    }
-    if (audioContext.state === "suspended") {
-      audioContext.resume();
-    }
-  } catch { /* ignore */ }
-
-  const url = googleTtsUrl(text);
-  const cached = ttsCache.get(text);
-  const audio = new Audio(cached || url);
-  audio.crossOrigin = "anonymous";
-  currentAudio = audio;
-
-  let fellBack = false;
-  audio.onerror = () => {
-    if (fellBack) return;
-    fellBack = true;
-    browserSpeak(text);
-  };
-  audio.onended = () => {
-    if (currentAudio === audio) currentAudio = null;
-  };
-  // Cache the URL so repeated plays are instant from the browser HTTP cache.
-  ttsCache.set(text, url);
-
-  const playPromise = audio.play();
-  if (playPromise && typeof playPromise.then === "function") {
-    playPromise.catch(() => {
-      if (fellBack) return;
-      fellBack = true;
-      browserSpeak(text);
-    });
-  }
+  browserSpeak(text);
 }
