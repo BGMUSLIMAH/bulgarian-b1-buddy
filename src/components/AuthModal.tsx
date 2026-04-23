@@ -1,15 +1,16 @@
 // Sign In / Sign Up / Forgot password modal.
+import { supabase } from "@/lib/supabase";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/auth";
 
-type Mode = "login" | "signup" | "forgot";
+type Mode = "login" | "signup" | "forgot" | "newpassword";
 
-export function AuthModal({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
+export function AuthModal({ open, onOpenChange, initialMode = "login" }: { open: boolean; onOpenChange: (o: boolean) => void; initialMode?: Mode }) {
   const { signIn, signUp, resetPassword, enabled } = useAuth();
-  const [mode, setMode] = useState<Mode>("login");
+  const [mode, setMode] = useState<Mode>(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -34,17 +35,21 @@ export function AuthModal({ open, onOpenChange }: { open: boolean; onOpenChange:
         const { error } = await signUp(email, password);
         if (error) setErr(error);
         else setMsg("Check your email to confirm your account.");
-      } else {
+      } else if (mode === "forgot") {
         const { error } = await resetPassword(email);
         if (error) setErr(error);
         else setMsg("Password reset email sent.");
+      } else if (mode === "newpassword") {
+        const { error } = await supabase!.auth.updateUser({ password });
+        if (error) setErr(error.message);
+        else { setMsg("Password updated! You are now signed in."); onOpenChange(false); }
       }
     } finally {
       setBusy(false);
     }
   }
 
-  const title = mode === "login" ? "Sign In" : mode === "signup" ? "Create account" : "Reset password";
+  const title = mode === "login" ? "Sign In" : mode === "signup" ? "Create account" : mode === "forgot" ? "Reset password" : "Set new password";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -58,18 +63,20 @@ export function AuthModal({ open, onOpenChange }: { open: boolean; onOpenChange:
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-3">
-          <Input
-            type="email"
-            placeholder="you@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            autoComplete="email"
-          />
-          {mode !== "forgot" && (
+          {mode !== "newpassword" && (
+            <Input
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              autoComplete="email"
+            />
+          )}
+          {(mode === "login" || mode === "signup" || mode === "newpassword") && (
             <Input
               type="password"
-              placeholder="Password"
+              placeholder={mode === "newpassword" ? "New password" : "Password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -84,17 +91,17 @@ export function AuthModal({ open, onOpenChange }: { open: boolean; onOpenChange:
           </Button>
         </form>
         <div className="flex flex-wrap justify-between gap-2 text-xs text-muted-foreground">
-          {mode !== "login" && (
+          {mode !== "login" && mode !== "newpassword" && (
             <button type="button" onClick={() => { reset(); setMode("login"); }} className="hover:text-foreground underline">
               Have an account? Sign in
             </button>
           )}
-          {mode !== "signup" && (
+          {mode !== "signup" && mode !== "newpassword" && (
             <button type="button" onClick={() => { reset(); setMode("signup"); }} className="hover:text-foreground underline">
               Create account
             </button>
           )}
-          {mode !== "forgot" && (
+          {mode !== "forgot" && mode !== "newpassword" && (
             <button type="button" onClick={() => { reset(); setMode("forgot"); }} className="hover:text-foreground underline">
               Forgot password?
             </button>
