@@ -176,7 +176,7 @@ function googleTtsUrl(text: string): string {
   // The "client=tw-ob" param is the well-known public path used by browser
   // extensions; "ttsspeed=1" is normal speed, "0.7" slower. We use 1.
   const enc = encodeURIComponent(text);
-  return `https://translate.google.com/translate_tts?ie=UTF-8&tl=bg&client=tw-ob&q=${enc}`;
+  return `https://bg-tts-proxy.amrani-amine-aero.workers.dev/?text=${enc}`;
 }
 
 function browserSpeak(text: string) {
