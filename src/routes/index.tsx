@@ -4,7 +4,7 @@ import { WORDS } from "@/data/words";
 import { VERBS } from "@/data/verbs";
 import { loadStats, masteredCount, type Stats } from "@/lib/store";
 
-export const Route = createFileRoute("/")({ component: Dashboard });
+export const Route = createFileRoute("/")({ component: Dashboard, ssr: false });
 
 const TILES = [
   { to: "/words", title: "Words", desc: "Bulgarian vocabulary across 11 life & career topics", emoji: "📚" },

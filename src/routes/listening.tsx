@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { WORDS } from "@/data/words";
 import { speak, shuffle, recordAnswer } from "@/lib/store";
 
-export const Route = createFileRoute("/listening")({ component: ListeningPage });
+export const Route = createFileRoute("/listening")({ component: ListeningPage, ssr: false });
 
 interface Q { bg: string; en: string; opts: string[]; }
 

@@ -4,7 +4,7 @@ import { VERBS, VERB_TENSES, hasTenses, type Verb, type VerbTenseSet } from "@/d
 import { QuizRunner } from "@/components/QuizRunner";
 import { buildVerbQuiz } from "@/lib/quiz";
 
-export const Route = createFileRoute("/verbs")({ component: VerbsPage });
+export const Route = createFileRoute("/verbs")({ component: VerbsPage, ssr: false });
 
 function VerbsPage() {
   const [tab, setTab] = useState<"list" | "practice">("list");

@@ -5,6 +5,7 @@ import { recordEvaluation, speak } from "@/lib/store";
 
 export const Route = createFileRoute("/evaluation")({
   component: EvalPage,
+  ssr: false,
   head: () => ({
     meta: [
       { title: "CEFR Level Test — Bulgarian Trainer" },

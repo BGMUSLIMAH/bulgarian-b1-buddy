@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { WORDS, type Category } from "@/data/words";
 import { speak } from "@/lib/store";
 
-export const Route = createFileRoute("/words")({ component: WordsPage });
+export const Route = createFileRoute("/words")({ component: WordsPage, ssr: false });
 
 const CATS: { key: "all" | Category; label: string }[] = [
   { key: "all", label: "All" },

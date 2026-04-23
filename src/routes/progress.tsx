@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { loadStats, resetStats, levelFromXP, masteredCount, type Stats } from "@/lib/store";
 
-export const Route = createFileRoute("/progress")({ component: ProgressPage });
+export const Route = createFileRoute("/progress")({ component: ProgressPage, ssr: false });
 
 function ProgressPage() {
   const [stats, setStats] = useState<Stats | null>(null);

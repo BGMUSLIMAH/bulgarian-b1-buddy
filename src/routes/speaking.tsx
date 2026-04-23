@@ -4,7 +4,7 @@ import { WORDS } from "@/data/words";
 import { SENTENCES } from "@/data/sentences";
 import { speak, shuffle } from "@/lib/store";
 
-export const Route = createFileRoute("/speaking")({ component: SpeakingPage });
+export const Route = createFileRoute("/speaking")({ component: SpeakingPage, ssr: false });
 
 function SpeakingPage() {
   const items = useMemo(

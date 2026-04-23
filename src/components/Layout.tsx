@@ -5,6 +5,8 @@ import { loadStats, levelFromXP, masteredCount } from "@/lib/store";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { InstallButton } from "@/components/InstallButton";
 import { CookieBanner } from "@/components/CookieBanner";
+import { AuthProvider } from "@/lib/auth";
+import { AuthButton } from "@/components/AuthButton";
 
 const TABS = [
   { to: "/", label: "Home" },
@@ -31,6 +33,7 @@ export function Layout() {
   }, []);
 
   return (
+    <AuthProvider>
     <div className="min-h-screen text-foreground">
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
@@ -82,6 +85,7 @@ export function Layout() {
               Lv {level}
             </span>
             <ThemeToggle />
+            <AuthButton />
           </div>
         </div>
       </header>
@@ -101,5 +105,6 @@ export function Layout() {
       </footer>
       <CookieBanner />
     </div>
+    </AuthProvider>
   );
 }

@@ -3,7 +3,7 @@ import { useState } from "react";
 import { QuizRunner } from "@/components/QuizRunner";
 import { buildMixed, buildWordQuiz, buildVerbQuiz } from "@/lib/quiz";
 
-export const Route = createFileRoute("/quiz")({ component: QuizPage });
+export const Route = createFileRoute("/quiz")({ component: QuizPage, ssr: false });
 
 type Mode = "mixed" | "words" | "verbs-inf" | "verbs-conj";
 
