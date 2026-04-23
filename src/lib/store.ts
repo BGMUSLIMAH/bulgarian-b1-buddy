@@ -211,10 +211,7 @@ function browserSpeak(text: string) {
   }
 }
 
-const ttsCache = new Map<string, string>();
-let currentAudio: HTMLAudioElement | null = null;
-
-export function speak(text: string) {
+  export function speak(text: string) {
   if (typeof window === "undefined") return;
   if (currentAudio) {
     currentAudio.pause();
