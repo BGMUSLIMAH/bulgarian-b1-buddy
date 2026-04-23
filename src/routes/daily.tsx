@@ -3,7 +3,7 @@ import { useState } from "react";
 import { QuizRunner } from "@/components/QuizRunner";
 import { buildMixed } from "@/lib/quiz";
 
-export const Route = createFileRoute("/daily")({ component: DailyPage });
+export const Route = createFileRoute("/daily")({ component: DailyPage, ssr: false });
 
 function DailyPage() {
   const [count, setCount] = useState(15);

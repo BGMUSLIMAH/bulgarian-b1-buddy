@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/terms")({
   component: TermsPage,
+  ssr: false,
   head: () => ({
     meta: [
       { title: "Terms of Service — Bulgarian Trainer" },

@@ -4,7 +4,7 @@ import { SENTENCES } from "@/data/sentences";
 import { SCENARIOS, type Scenario } from "@/data/scenarios";
 import { speak } from "@/lib/store";
 
-export const Route = createFileRoute("/reading")({ component: ReadingPage });
+export const Route = createFileRoute("/reading")({ component: ReadingPage, ssr: false });
 
 function ReadingPage() {
   const [tab, setTab] = useState<"sentences" | "scenarios">("scenarios");

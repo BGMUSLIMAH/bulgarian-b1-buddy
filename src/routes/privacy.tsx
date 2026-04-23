@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/privacy")({
   component: PrivacyPage,
+  ssr: false,
   head: () => ({
     meta: [
       { title: "Privacy Policy — Bulgarian Trainer" },
