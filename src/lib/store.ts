@@ -211,7 +211,8 @@ function browserSpeak(text: string) {
   }
 }
 
-let audioContext: AudioContext | null = null;
+const ttsCache = new Map<string, string>();
+let currentAudio: HTMLAudioElement | null = null;
 
 export function speak(text: string) {
   if (typeof window === "undefined") return;
@@ -220,5 +221,31 @@ export function speak(text: string) {
     currentAudio.currentTime = 0;
     currentAudio = null;
   }
-  browserSpeak(text);
+  if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+
+  const url = googleTtsUrl(text);
+  const cached = ttsCache.get(text);
+  const audio = new Audio(cached || url);
+  audio.crossOrigin = "anonymous";
+  currentAudio = audio;
+
+  let fellBack = false;
+  audio.onerror = () => {
+    if (fellBack) return;
+    fellBack = true;
+    browserSpeak(text);
+  };
+  audio.onended = () => {
+    if (currentAudio === audio) currentAudio = null;
+  };
+  ttsCache.set(text, url);
+
+  const playPromise = audio.play();
+  if (playPromise && typeof playPromise.then === "function") {
+    playPromise.catch(() => {
+      if (fellBack) return;
+      fellBack = true;
+      browserSpeak(text);
+    });
+  }
 }
