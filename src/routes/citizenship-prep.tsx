@@ -1,7 +1,8 @@
 // Bulgarian Citizenship Test Prep — 5 mock exams (20 questions each, pass = 12).
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { CITIZENSHIP_EXAMS, type CitizenshipExam } from "@/data/citizenship";
+import { CITIZENSHIP_EXAMS, type CitizenshipExam, type CitizenshipQuestion } from "@/data/citizenship";
+import { shuffle } from "@/lib/store";
 
 export const Route = createFileRoute("/citizenship-prep")({
   component: CitizenshipPrepPage,
@@ -49,7 +50,7 @@ function CitizenshipPrepPage() {
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
             5 full mock exams modeled on the official ЦКОКУО Bulgarian language test.
-            Pass = {PASS_SCORE}/20.
+            Pass = {PASS_SCORE}/20. Questions are shuffled each attempt.
           </p>
         </header>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -86,11 +87,18 @@ function CitizenshipPrepPage() {
 }
 
 function ExamRunner({ exam, onExit }: { exam: CitizenshipExam; onExit: () => void }) {
+  // Shuffle questions once per attempt (new shuffle every time the component mounts)
+  const questions = useMemo<CitizenshipQuestion[]>(
+    () => shuffle([...exam.questions]),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+
   const [showEn, setShowEn] = useState(false);
   const [idx, setIdx] = useState(0);
   const [picked, setPicked] = useState<number | null>(null);
   const [answers, setAnswers] = useState<(number | null)[]>(() =>
-    exam.questions.map(() => null),
+    questions.map(() => null),
   );
   const [done, setDone] = useState(false);
   const [elapsed, setElapsed] = useState(0);
@@ -103,8 +111,8 @@ function ExamRunner({ exam, onExit }: { exam: CitizenshipExam; onExit: () => voi
     return () => clearInterval(t);
   }, []);
 
-  const total = exam.questions.length;
-  const q = exam.questions[idx];
+  const total = questions.length;
+  const q = questions[idx];
 
   function pick(i: number) {
     if (picked !== null) return;
@@ -118,7 +126,7 @@ function ExamRunner({ exam, onExit }: { exam: CitizenshipExam; onExit: () => voi
     if (picked === null) return;
     if (idx + 1 >= total) {
       const score = answers.reduce<number>(
-        (acc, ans, i) => acc + (ans === exam.questions[i].correct ? 1 : 0),
+        (acc, ans, i) => acc + (ans === questions[i].correct ? 1 : 0),
         0,
       );
       saveScore(exam.id, score, total, elapsed);
@@ -131,11 +139,11 @@ function ExamRunner({ exam, onExit }: { exam: CitizenshipExam; onExit: () => voi
 
   if (done) {
     const score = answers.reduce<number>(
-      (acc, ans, i) => acc + (ans === exam.questions[i].correct ? 1 : 0),
+      (acc, ans, i) => acc + (ans === questions[i].correct ? 1 : 0),
       0,
     );
     const passed = score >= PASS_SCORE;
-    const wrong = exam.questions
+    const wrong = questions
       .map((qq, i) => ({ qq, i, ans: answers[i] }))
       .filter((x) => x.ans !== x.qq.correct);
 
