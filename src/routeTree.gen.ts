@@ -17,9 +17,12 @@ import { Route as ReadingRouteImport } from './routes/reading'
 import { Route as QuizRouteImport } from './routes/quiz'
 import { Route as ProgressRouteImport } from './routes/progress'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as MedicalBgRouteImport } from './routes/medical-bg'
 import { Route as ListeningRouteImport } from './routes/listening'
+import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as EvaluationRouteImport } from './routes/evaluation'
 import { Route as DailyRouteImport } from './routes/daily'
+import { Route as CitizenshipPrepRouteImport } from './routes/citizenship-prep'
 import { Route as IndexRouteImport } from './routes/index'
 
 const WordsRoute = WordsRouteImport.update({
@@ -62,9 +65,19 @@ const PrivacyRoute = PrivacyRouteImport.update({
   path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MedicalBgRoute = MedicalBgRouteImport.update({
+  id: '/medical-bg',
+  path: '/medical-bg',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ListeningRoute = ListeningRouteImport.update({
   id: '/listening',
   path: '/listening',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LeaderboardRoute = LeaderboardRouteImport.update({
+  id: '/leaderboard',
+  path: '/leaderboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EvaluationRoute = EvaluationRouteImport.update({
@@ -77,6 +90,11 @@ const DailyRoute = DailyRouteImport.update({
   path: '/daily',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CitizenshipPrepRoute = CitizenshipPrepRouteImport.update({
+  id: '/citizenship-prep',
+  path: '/citizenship-prep',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -85,9 +103,12 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/citizenship-prep': typeof CitizenshipPrepRoute
   '/daily': typeof DailyRoute
   '/evaluation': typeof EvaluationRoute
+  '/leaderboard': typeof LeaderboardRoute
   '/listening': typeof ListeningRoute
+  '/medical-bg': typeof MedicalBgRoute
   '/privacy': typeof PrivacyRoute
   '/progress': typeof ProgressRoute
   '/quiz': typeof QuizRoute
@@ -99,9 +120,12 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/citizenship-prep': typeof CitizenshipPrepRoute
   '/daily': typeof DailyRoute
   '/evaluation': typeof EvaluationRoute
+  '/leaderboard': typeof LeaderboardRoute
   '/listening': typeof ListeningRoute
+  '/medical-bg': typeof MedicalBgRoute
   '/privacy': typeof PrivacyRoute
   '/progress': typeof ProgressRoute
   '/quiz': typeof QuizRoute
@@ -114,9 +138,12 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/citizenship-prep': typeof CitizenshipPrepRoute
   '/daily': typeof DailyRoute
   '/evaluation': typeof EvaluationRoute
+  '/leaderboard': typeof LeaderboardRoute
   '/listening': typeof ListeningRoute
+  '/medical-bg': typeof MedicalBgRoute
   '/privacy': typeof PrivacyRoute
   '/progress': typeof ProgressRoute
   '/quiz': typeof QuizRoute
@@ -130,9 +157,12 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/citizenship-prep'
     | '/daily'
     | '/evaluation'
+    | '/leaderboard'
     | '/listening'
+    | '/medical-bg'
     | '/privacy'
     | '/progress'
     | '/quiz'
@@ -144,9 +174,12 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/citizenship-prep'
     | '/daily'
     | '/evaluation'
+    | '/leaderboard'
     | '/listening'
+    | '/medical-bg'
     | '/privacy'
     | '/progress'
     | '/quiz'
@@ -158,9 +191,12 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/citizenship-prep'
     | '/daily'
     | '/evaluation'
+    | '/leaderboard'
     | '/listening'
+    | '/medical-bg'
     | '/privacy'
     | '/progress'
     | '/quiz'
@@ -173,9 +209,12 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CitizenshipPrepRoute: typeof CitizenshipPrepRoute
   DailyRoute: typeof DailyRoute
   EvaluationRoute: typeof EvaluationRoute
+  LeaderboardRoute: typeof LeaderboardRoute
   ListeningRoute: typeof ListeningRoute
+  MedicalBgRoute: typeof MedicalBgRoute
   PrivacyRoute: typeof PrivacyRoute
   ProgressRoute: typeof ProgressRoute
   QuizRoute: typeof QuizRoute
@@ -244,11 +283,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/medical-bg': {
+      id: '/medical-bg'
+      path: '/medical-bg'
+      fullPath: '/medical-bg'
+      preLoaderRoute: typeof MedicalBgRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/listening': {
       id: '/listening'
       path: '/listening'
       fullPath: '/listening'
       preLoaderRoute: typeof ListeningRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/leaderboard': {
+      id: '/leaderboard'
+      path: '/leaderboard'
+      fullPath: '/leaderboard'
+      preLoaderRoute: typeof LeaderboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/evaluation': {
@@ -265,6 +318,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DailyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/citizenship-prep': {
+      id: '/citizenship-prep'
+      path: '/citizenship-prep'
+      fullPath: '/citizenship-prep'
+      preLoaderRoute: typeof CitizenshipPrepRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -277,9 +337,12 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CitizenshipPrepRoute: CitizenshipPrepRoute,
   DailyRoute: DailyRoute,
   EvaluationRoute: EvaluationRoute,
+  LeaderboardRoute: LeaderboardRoute,
   ListeningRoute: ListeningRoute,
+  MedicalBgRoute: MedicalBgRoute,
   PrivacyRoute: PrivacyRoute,
   ProgressRoute: ProgressRoute,
   QuizRoute: QuizRoute,
@@ -292,3 +355,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}

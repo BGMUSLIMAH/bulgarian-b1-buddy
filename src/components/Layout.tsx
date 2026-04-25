@@ -18,6 +18,9 @@ const TABS = [
   { to: "/speaking", label: "Speaking" },
   { to: "/reading", label: "Reading" },
   { to: "/evaluation", label: "Evaluation" },
+  { to: "/citizenship-prep", label: "🏛️ Citizenship" },
+  { to: "/medical-bg", label: "🏥 Medical BG" },
+  { to: "/leaderboard", label: "🏆 Leaderboard" },
   { to: "/progress", label: "Progress" },
 ] as const;
 
