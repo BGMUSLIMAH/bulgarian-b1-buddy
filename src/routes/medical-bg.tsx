@@ -1,13 +1,19 @@
-// Medical Bulgarian — vocabulary, dialogues, practice test.
+// Medical Bulgarian — vocabulary, dialogues, practice test, oral prep.
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import {
   MEDICAL_VOCAB,
   DISEASE_DIALOGUES,
   MEDICAL_QUESTIONS,
+  ORAL_TOPICS,
+  CASE_STUDY_CARDS,
+  EXAM_CONFIG,
   type MedicalCategory,
+  type OralTopic,
+  type CaseStudyCard,
 } from "@/data/medical";
-import { speak } from "@/lib/store";
+import { speak, shuffle } from "@/lib/store";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 export const Route = createFileRoute("/medical-bg")({
@@ -16,6 +22,7 @@ export const Route = createFileRoute("/medical-bg")({
 });
 
 const STORAGE_KEY = "btb1_medical_v1";
+const EXAM_STORAGE_KEY = "btb1_medical_exam_v1";
 
 const CATEGORIES: { id: MedicalCategory | "all"; label: string }[] = [
   { id: "all", label: "All" },
@@ -29,6 +36,7 @@ const CATEGORIES: { id: MedicalCategory | "all"; label: string }[] = [
 ];
 
 function MedicalBgPage() {
+  const [tab, setTab] = useState("vocab");
   return (
     <div className="space-y-6">
       <header>
@@ -36,16 +44,17 @@ function MedicalBgPage() {
           🏥 Medical Bulgarian
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Vocabulary, doctor-patient dialogues, and a practice test for foreign
-          medical students and doctors in Bulgaria.
+          Vocabulary, doctor-patient dialogues, written test, and oral prep for
+          foreign medical students and doctors in Bulgaria.
         </p>
       </header>
 
-      <Tabs defaultValue="vocab" className="w-full">
+      <Tabs value={tab} onValueChange={setTab} className="w-full">
         <TabsList className="w-full justify-start">
           <TabsTrigger value="vocab">Vocabulary</TabsTrigger>
           <TabsTrigger value="dialogues">Dialogues</TabsTrigger>
           <TabsTrigger value="test">Practice Test</TabsTrigger>
+          <TabsTrigger value="oral">Oral Prep</TabsTrigger>
         </TabsList>
 
         <TabsContent value="vocab" className="mt-4">
@@ -55,7 +64,10 @@ function MedicalBgPage() {
           <DialoguesTab />
         </TabsContent>
         <TabsContent value="test" className="mt-4">
-          <PracticeTestTab />
+          <PracticeTestTab setTab={setTab} />
+        </TabsContent>
+        <TabsContent value="oral" className="mt-4">
+          <OralPrepTab />
         </TabsContent>
       </Tabs>
     </div>
@@ -189,15 +201,66 @@ function DialoguesTab() {
   );
 }
 
-function PracticeTestTab() {
+// ─────────────────────────── Practice Test ───────────────────────────
+
+type TestMode = "study" | "exam";
+
+function PracticeTestTab({ setTab }: { setTab: (t: string) => void }) {
+  const [mode, setMode] = useState<TestMode | null>(null);
+
+  if (mode === null) {
+    return (
+      <div className="grid gap-4 sm:grid-cols-2">
+        <button
+          onClick={() => setMode("study")}
+          className="rounded-xl border border-border bg-card p-6 text-left shadow-sm transition-all hover:bg-accent/40"
+        >
+          <p className="font-display text-2xl font-bold text-foreground">
+            📖 Study Mode
+          </p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {EXAM_CONFIG.studyQuestionCount} random questions, no timer. Practice
+            and learn at your own pace.
+          </p>
+        </button>
+        <button
+          onClick={() => setMode("exam")}
+          className="rounded-xl border border-border bg-card p-6 text-left shadow-sm transition-all hover:bg-accent/40"
+        >
+          <p className="font-display text-2xl font-bold text-foreground">
+            🏥 Exam Mode
+          </p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            All {EXAM_CONFIG.writtenQuestionCount} questions, count-up timer,
+            {" "}{EXAM_CONFIG.writtenDurationMinutes}-minute soft limit. Pass at{" "}
+            {Math.round(EXAM_CONFIG.writtenPassThreshold * 100)}% to unlock oral.
+          </p>
+        </button>
+      </div>
+    );
+  }
+
+  return mode === "study" ? (
+    <StudyModeRunner onExit={() => setMode(null)} />
+  ) : (
+    <ExamModeRunner onExit={() => setMode(null)} setTab={setTab} />
+  );
+}
+
+function useQuestions(count: number) {
+  return useMemo(() => shuffle(MEDICAL_QUESTIONS).slice(0, count), [count]);
+}
+
+function StudyModeRunner({ onExit }: { onExit: () => void }) {
+  const questions = useQuestions(EXAM_CONFIG.studyQuestionCount);
   const [idx, setIdx] = useState(0);
   const [picked, setPicked] = useState<number | null>(null);
   const [answers, setAnswers] = useState<(number | null)[]>(() =>
-    MEDICAL_QUESTIONS.map(() => null),
+    questions.map(() => null),
   );
   const [done, setDone] = useState(false);
-  const total = MEDICAL_QUESTIONS.length;
-  const q = MEDICAL_QUESTIONS[idx];
+  const total = questions.length;
+  const q = questions[idx];
 
   function pick(i: number) {
     if (picked !== null) return;
@@ -211,7 +274,7 @@ function PracticeTestTab() {
     if (picked === null) return;
     if (idx + 1 >= total) {
       const score = answers.reduce<number>(
-        (acc, a, i) => acc + (a === MEDICAL_QUESTIONS[i].correct ? 1 : 0),
+        (acc, a, i) => acc + (a === questions[i].correct ? 1 : 0),
         0,
       );
       try {
@@ -227,20 +290,13 @@ function PracticeTestTab() {
     setPicked(null);
   }
 
-  function restart() {
-    setIdx(0);
-    setPicked(null);
-    setAnswers(MEDICAL_QUESTIONS.map(() => null));
-    setDone(false);
-  }
-
   if (done) {
     const score = answers.reduce<number>(
-      (acc, a, i) => acc + (a === MEDICAL_QUESTIONS[i].correct ? 1 : 0),
+      (acc, a, i) => acc + (a === questions[i].correct ? 1 : 0),
       0,
     );
     const byCat: Record<string, { c: number; t: number }> = {};
-    MEDICAL_QUESTIONS.forEach((qq, i) => {
+    questions.forEach((qq, i) => {
       const k = qq.category;
       byCat[k] = byCat[k] || { c: 0, t: 0 };
       byCat[k].t++;
@@ -256,7 +312,7 @@ function PracticeTestTab() {
             {Math.round((score / total) * 100)}%
           </p>
           <button
-            onClick={restart}
+            onClick={onExit}
             className="mt-4 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
           >
             Try again
@@ -282,10 +338,192 @@ function PracticeTestTab() {
   }
 
   return (
+    <McqCard
+      q={q}
+      idx={idx}
+      total={total}
+      picked={picked}
+      onPick={pick}
+      onNext={next}
+      headerRight={<span className="capitalize">{q.category}</span>}
+    />
+  );
+}
+
+function fmtTime(sec: number): string {
+  const m = Math.floor(sec / 60).toString().padStart(2, "0");
+  const s = (sec % 60).toString().padStart(2, "0");
+  return `${m}:${s}`;
+}
+
+function ExamModeRunner({
+  onExit,
+  setTab,
+}: {
+  onExit: () => void;
+  setTab: (t: string) => void;
+}) {
+  const questions = useQuestions(EXAM_CONFIG.writtenQuestionCount);
+  const [idx, setIdx] = useState(0);
+  const [picked, setPicked] = useState<number | null>(null);
+  const [answers, setAnswers] = useState<(number | null)[]>(() =>
+    questions.map(() => null),
+  );
+  const [done, setDone] = useState(false);
+  const [seconds, setSeconds] = useState(0);
+  const warnedRef = useRef(false);
+
+  useEffect(() => {
+    if (done) return;
+    const id = setInterval(() => {
+      setSeconds((s) => {
+        const next = s + 1;
+        if (
+          !warnedRef.current &&
+          next >= EXAM_CONFIG.writtenDurationMinutes * 60
+        ) {
+          warnedRef.current = true;
+          toast("⏱️ 90 minutes reached — submit when ready");
+        }
+        return next;
+      });
+    }, 1000);
+    return () => clearInterval(id);
+  }, [done]);
+
+  const total = questions.length;
+  const q = questions[idx];
+
+  function pick(i: number) {
+    if (picked !== null) return;
+    setPicked(i);
+    const next = [...answers];
+    next[idx] = i;
+    setAnswers(next);
+  }
+
+  function next() {
+    if (picked === null) return;
+    if (idx + 1 >= total) {
+      const score = answers.reduce<number>(
+        (acc, a, i) => acc + (a === questions[i].correct ? 1 : 0),
+        0,
+      );
+      const passed = score >= EXAM_CONFIG.writtenPassThreshold * total;
+      try {
+        localStorage.setItem(
+          EXAM_STORAGE_KEY,
+          JSON.stringify({
+            score,
+            total,
+            passed,
+            date: new Date().toISOString(),
+          }),
+        );
+      } catch {}
+      setDone(true);
+      return;
+    }
+    setIdx(idx + 1);
+    setPicked(null);
+  }
+
+  if (done) {
+    const score = answers.reduce<number>(
+      (acc, a, i) => acc + (a === questions[i].correct ? 1 : 0),
+      0,
+    );
+    const passed = score >= EXAM_CONFIG.writtenPassThreshold * total;
+    return (
+      <div className="space-y-4">
+        <div className="rounded-xl border border-border bg-card p-6 text-center shadow-sm">
+          <h3 className="font-display text-3xl font-bold text-foreground">
+            {score} / {total}
+          </h3>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {Math.round((score / total) * 100)}% · Time {fmtTime(seconds)}
+          </p>
+          {passed ? (
+            <p className="mt-4 text-sm font-medium text-green-400">
+              ✅ Written section passed! Oral section unlocked.
+            </p>
+          ) : (
+            <>
+              <p className="mt-4 text-sm font-medium text-red-400">
+                ❌ Score below 60%. Retake the written section.
+              </p>
+              <button
+                onClick={onExit}
+                className="mt-4 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+              >
+                Retry
+              </button>
+            </>
+          )}
+        </div>
+        {passed && <OralResultsUnlock setTab={setTab} />}
+      </div>
+    );
+  }
+
+  return (
+    <McqCard
+      q={q}
+      idx={idx}
+      total={total}
+      picked={picked}
+      onPick={pick}
+      onNext={next}
+      headerRight={
+        <span className="font-mono tabular-nums text-foreground">
+          ⏱ {fmtTime(seconds)}
+        </span>
+      }
+    />
+  );
+}
+
+function OralResultsUnlock({ setTab }: { setTab: (t: string) => void }) {
+  return (
+    <div className="rounded-xl border border-green-500/40 bg-green-500/10 p-5 shadow-sm">
+      <p className="text-sm text-foreground">
+        Scroll down to the Oral Prep tab to practice your case studies and
+        discussion topics.
+      </p>
+      <button
+        onClick={() => setTab("oral")}
+        className="mt-3 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+      >
+        Go to Oral Prep →
+      </button>
+    </div>
+  );
+}
+
+function McqCard({
+  q,
+  idx,
+  total,
+  picked,
+  onPick,
+  onNext,
+  headerRight,
+}: {
+  q: (typeof MEDICAL_QUESTIONS)[number];
+  idx: number;
+  total: number;
+  picked: number | null;
+  onPick: (i: number) => void;
+  onNext: () => void;
+  headerRight?: React.ReactNode;
+}) {
+  return (
     <div className="rounded-xl border border-border bg-card p-6 shadow-lg">
       <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
-        <span>Question {idx + 1} / {total}</span>
-        <span className="capitalize">{q.category}</span>
+        <span>
+          Question {idx + 1} / {total}
+        </span>
+        {headerRight}
       </div>
       <h3 className="text-lg font-semibold text-foreground">{q.prompt}</h3>
       <div className="mt-4 grid gap-3">
@@ -296,13 +534,20 @@ function PracticeTestTab() {
             "rounded-lg border border-border bg-secondary px-4 py-3 text-left text-sm text-secondary-foreground transition-colors hover:bg-accent disabled:cursor-not-allowed";
           if (picked !== null) {
             if (isCorrect)
-              cls = "rounded-lg border border-green-500 bg-green-500/20 px-4 py-3 text-left text-sm text-green-200";
+              cls =
+                "rounded-lg border border-green-500 bg-green-500/20 px-4 py-3 text-left text-sm text-green-200";
             else if (isPicked)
-              cls = "rounded-lg border border-red-500 bg-red-500/20 px-4 py-3 text-left text-sm text-red-200";
+              cls =
+                "rounded-lg border border-red-500 bg-red-500/20 px-4 py-3 text-left text-sm text-red-200";
             else cls += " opacity-60";
           }
           return (
-            <button key={i} disabled={picked !== null} onClick={() => pick(i)} className={cls}>
+            <button
+              key={i}
+              disabled={picked !== null}
+              onClick={() => onPick(i)}
+              className={cls}
+            >
               {opt}
             </button>
           );
@@ -321,7 +566,7 @@ function PracticeTestTab() {
               )}
             </p>
             <button
-              onClick={next}
+              onClick={onNext}
               className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
             >
               {idx + 1 === total ? "Finish" : "Next →"}
@@ -331,6 +576,162 @@ function PracticeTestTab() {
           <p className="text-xs text-muted-foreground">Pick an answer.</p>
         )}
       </div>
+    </div>
+  );
+}
+
+// ─────────────────────────── Oral Prep ───────────────────────────
+
+type OralSection = "topics" | "cases";
+
+function OralPrepTab() {
+  const [section, setSection] = useState<OralSection>("topics");
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap gap-2">
+        <button
+          onClick={() => setSection("topics")}
+          className={`rounded-full px-3 py-1 text-xs transition-colors ${
+            section === "topics"
+              ? "bg-primary text-primary-foreground"
+              : "border border-border bg-card text-muted-foreground hover:bg-accent"
+          }`}
+        >
+          💬 Discussion Topics
+        </button>
+        <button
+          onClick={() => setSection("cases")}
+          className={`rounded-full px-3 py-1 text-xs transition-colors ${
+            section === "cases"
+              ? "bg-primary text-primary-foreground"
+              : "border border-border bg-card text-muted-foreground hover:bg-accent"
+          }`}
+        >
+          📋 Case Studies
+        </button>
+      </div>
+      {section === "topics" ? <DiscussionTopics /> : <CaseStudies />}
+    </div>
+  );
+}
+
+function DiscussionTopics() {
+  const [openId, setOpenId] = useState<string | null>(null);
+  return (
+    <div className="space-y-3">
+      {ORAL_TOPICS.map((t: OralTopic) => {
+        const open = openId === t.id;
+        return (
+          <div
+            key={t.id}
+            className="rounded-xl border border-border bg-card shadow-sm"
+          >
+            <div className="p-4">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <p className="font-display text-lg font-semibold text-foreground">
+                    {t.topic}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{t.topicEn}</p>
+                </div>
+                <button
+                  onClick={() => speak(t.topic)}
+                  className="shrink-0 rounded-full border border-border bg-card px-2 py-1 text-xs hover:bg-accent"
+                  aria-label="Play audio"
+                >
+                  🔊
+                </button>
+              </div>
+              <button
+                onClick={() => setOpenId(open ? null : t.id)}
+                className="mt-3 rounded-md border border-border bg-secondary px-3 py-1 text-xs text-secondary-foreground hover:bg-accent"
+              >
+                {open ? "Hide Sample Answer" : "Show Sample Answer"}
+              </button>
+            </div>
+            {open && (
+              <div className="space-y-3 border-t border-border p-4">
+                <div className="rounded-md border border-primary/30 bg-primary/10 p-3">
+                  <p className="text-sm text-foreground">{t.sampleAnswer}</p>
+                  <p className="mt-2 text-xs italic text-muted-foreground">
+                    {t.sampleAnswerEn}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase text-muted-foreground">
+                    Key phrases
+                  </p>
+                  <ul className="mt-2 grid gap-1 text-sm sm:grid-cols-2">
+                    {t.keyPhrases.map((p) => (
+                      <li key={p.bg}>
+                        <span className="font-medium text-foreground">
+                          {p.bg}
+                        </span>
+                        <span className="text-muted-foreground"> — {p.en}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function CaseStudies() {
+  const [openId, setOpenId] = useState<string | null>(null);
+  return (
+    <div className="space-y-3">
+      {CASE_STUDY_CARDS.map((c: CaseStudyCard) => {
+        const open = openId === c.id;
+        return (
+          <div
+            key={c.id}
+            className="rounded-xl border border-border bg-card shadow-sm"
+          >
+            <div className="p-4">
+              <p className="font-display text-lg font-semibold text-foreground">
+                {c.disease}
+              </p>
+              <p className="text-xs text-muted-foreground">{c.diseaseEn}</p>
+              <p className="mt-3 text-sm text-foreground">{c.scenario}</p>
+              <p className="mt-1 text-xs italic text-muted-foreground">
+                {c.scenarioEn}
+              </p>
+              <button
+                onClick={() => setOpenId(open ? null : c.id)}
+                className="mt-3 rounded-md border border-border bg-secondary px-3 py-1 text-xs text-secondary-foreground hover:bg-accent"
+              >
+                {open ? "Hide Expected Points" : "Show Expected Points"}
+              </button>
+            </div>
+            {open && (
+              <div className="border-t border-border p-4">
+                <ol className="space-y-3 text-sm">
+                  {c.expectedPoints.map((p, i) => (
+                    <li key={i}>
+                      <p className="text-foreground">
+                        <span className="mr-1 font-semibold text-primary">
+                          {i + 1}.
+                        </span>
+                        {p}
+                      </p>
+                      {c.expectedPointsEn[i] && (
+                        <p className="ml-5 text-xs italic text-muted-foreground">
+                          {c.expectedPointsEn[i]}
+                        </p>
+                      )}
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
