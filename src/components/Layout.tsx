@@ -8,7 +8,7 @@ import { CookieBanner } from "@/components/CookieBanner";
 import { AuthProvider } from "@/lib/auth";
 import { AuthButton } from "@/components/AuthButton";
 
-const TABS = [
+const PRIMARY_TABS = [
   { to: "/", label: "Home" },
   { to: "/words", label: "Words" },
   { to: "/verbs", label: "Verbs" },
@@ -18,16 +18,79 @@ const TABS = [
   { to: "/speaking", label: "Speaking" },
   { to: "/reading", label: "Reading" },
   { to: "/evaluation", label: "Evaluation" },
-  { to: "/citizenship-prep", label: "🏛️ Citizenship" },
-  { to: "/medical-bg", label: "🏥 Medical БГ" },
-  { to: "/leaderboard", label: "🏆 Leaderboard" },
-  { to: "/progress", label: "Progress" },
 ] as const;
+
+const PREMIUM_TABS = [
+  { to: "/citizenship-prep", label: "🏛️ Citizenship", premium: true },
+  { to: "/medical-bg", label: "🏥 Medical БГ", premium: true },
+  { to: "/leaderboard", label: "🏆 Leaderboard", premium: true },
+  { to: "/progress", label: "Progress", premium: false },
+] as const;
+
+const ALL_TABS = [...PRIMARY_TABS, ...PREMIUM_TABS];
+
+function NavLink({
+  to,
+  label,
+  premium,
+  onClick,
+}: {
+  to: string;
+  label: string;
+  premium?: boolean;
+  onClick?: () => void;
+}) {
+  return (
+    <Link
+      to={to}
+      activeOptions={{ exact: to === "/" }}
+      onClick={onClick}
+      className={`rounded-full px-3 py-1.5 text-sm transition-colors hover:bg-accent hover:text-accent-foreground data-[status=active]:bg-primary data-[status=active]:text-primary-foreground data-[status=active]:font-semibold ${
+        premium ? "text-yellow-500/80" : "text-muted-foreground"
+      }`}
+    >
+      {label}
+    </Link>
+  );
+}
+
+function Logo() {
+  return (
+    <Link to="/" className="flex items-center gap-2 shrink-0">
+      <svg width="36" height="36" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
+        <clipPath id="circle-clip">
+          <circle cx="18" cy="18" r="17" />
+        </clipPath>
+        <circle cx="18" cy="18" r="17" fill="#fff" stroke="#2a2a1e" strokeWidth="1" />
+        <rect x="1" y="1" width="34" height="11.3" fill="#ffffff" clipPath="url(#circle-clip)" />
+        <rect x="1" y="12.3" width="34" height="11.3" fill="#00966E" clipPath="url(#circle-clip)" />
+        <rect x="1" y="23.6" width="34" height="11.4" fill="#D62612" clipPath="url(#circle-clip)" />
+        <text
+          x="18"
+          y="23"
+          textAnchor="middle"
+          fontSize="13"
+          fontWeight="800"
+          fontFamily="system-ui,sans-serif"
+          fill="#1a1a0e"
+          letterSpacing="-0.5"
+        >
+          БТ
+        </text>
+      </svg>
+      <span className="font-display text-xl font-black tracking-tight text-foreground leading-none">
+        Български<span className="text-[#00966E]"> Trainer</span>
+      </span>
+    </Link>
+  );
+}
 
 export function Layout() {
   const [streak, setStreak] = useState(0);
   const [level, setLevel] = useState(1);
   const [mastered, setMastered] = useState(0);
+  const [menuOpen, setMenuOpen] = useState(false);
+
   useEffect(() => {
     const s = loadStats();
     setStreak(s.streakDays);
@@ -35,79 +98,122 @@ export function Layout() {
     setMastered(masteredCount(s));
   }, []);
 
+  const closeMenu = () => setMenuOpen(false);
+
+  const StatPills = () => (
+    <>
+      <InstallButton />
+      <span
+        title="Daily streak"
+        className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-2.5 py-1 text-xs font-medium"
+      >
+        🔥 <span>{streak}</span>
+      </span>
+      <span
+        title="Mastered words"
+        className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-2.5 py-1 text-xs font-medium"
+      >
+        ⭐ <span>{mastered}</span>
+      </span>
+      <span
+        title="Level"
+        className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary"
+      >
+        Lv {level}
+      </span>
+      <ThemeToggle />
+      <AuthButton />
+    </>
+  );
+
   return (
     <AuthProvider>
-    <div className="min-h-screen text-foreground">
-      <link rel="preconnect" href="https://fonts.googleapis.com" />
-      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-      <link
-        rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,900&family=Inter:wght@400;500;600;700&display=swap"
-      />
+      <div className="min-h-screen text-foreground">
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,900&family=Inter:wght@400;500;600;700&display=swap"
+        />
 
-      <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
-          <Link to="/" className="flex items-center gap-2.5 font-bold">
-            <span className="bg-flag-stripe inline-block h-8 w-8 rounded-md ring-1 ring-border" aria-hidden />
-            <span className="font-display text-xl tracking-tight text-foreground">
-              Български <span className="text-primary">Trainer</span>
-            </span>
-          </Link>
+        <header className="sticky top-0 z-40 border-b border-border/60 bg-background/85 backdrop-blur">
+          <div className="mx-auto max-w-6xl px-4 py-3">
+            {/* Top row: Logo + (desktop right controls / mobile hamburger) */}
+            <div className="flex items-center justify-between gap-4">
+              <Logo />
 
-          <nav className="order-3 flex w-full flex-wrap gap-1 sm:order-none sm:w-auto sm:flex-1 sm:justify-center">
-            {TABS.map((t) => (
-              <Link
-                key={t.to}
-                to={t.to}
-                activeOptions={{ exact: t.to === "/" }}
-                className="rounded-full px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground data-[status=active]:bg-primary data-[status=active]:text-primary-foreground"
+              {/* Desktop right controls */}
+              <div className="hidden md:flex flex-wrap items-center gap-2 shrink-0">
+                <StatPills />
+              </div>
+
+              {/* Mobile hamburger */}
+              <button
+                type="button"
+                aria-label="Toggle menu"
+                aria-expanded={menuOpen}
+                onClick={() => setMenuOpen((v) => !v)}
+                className="md:hidden inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-card text-lg"
               >
-                {t.label}
-              </Link>
-            ))}
-          </nav>
+                {menuOpen ? "✕" : "☰"}
+              </button>
+            </div>
 
-          <div className="ml-auto flex flex-wrap items-center gap-2 text-xs">
-            <InstallButton />
-            <span
-              title="Daily streak"
-              className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-2.5 py-1 font-medium"
-            >
-              🔥 <span>{streak}</span>
-            </span>
-            <span
-              title="Mastered words"
-              className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-2.5 py-1 font-medium"
-            >
-              ⭐ <span>{mastered}</span>
-            </span>
-            <span
-              title="Level"
-              className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 font-semibold text-primary"
-            >
-              Lv {level}
-            </span>
-            <ThemeToggle />
-            <AuthButton />
+            {/* Desktop nav: 2 rows */}
+            <nav className="hidden md:block mt-3 space-y-1.5">
+              <div className="flex flex-wrap items-center gap-1">
+                {PRIMARY_TABS.map((t) => (
+                  <NavLink key={t.to} to={t.to} label={t.label} />
+                ))}
+              </div>
+              <div className="flex flex-wrap items-center gap-1 border-l-2 border-border/60 pl-2">
+                {PREMIUM_TABS.map((t) => (
+                  <NavLink key={t.to} to={t.to} label={t.label} premium={t.premium} />
+                ))}
+              </div>
+            </nav>
+
+            {/* Mobile dropdown panel */}
+            {menuOpen && (
+              <div className="md:hidden mt-3 border-t border-border/60 pt-3 space-y-1">
+                <div className="flex flex-col gap-1">
+                  {ALL_TABS.map((t) => (
+                    <NavLink
+                      key={t.to}
+                      to={t.to}
+                      label={t.label}
+                      premium={"premium" in t ? t.premium : false}
+                      onClick={closeMenu}
+                    />
+                  ))}
+                </div>
+                <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border/60 pt-3">
+                  <StatPills />
+                </div>
+              </div>
+            )}
           </div>
-        </div>
-      </header>
+        </header>
 
-      <main className="mx-auto max-w-6xl px-4 py-8">
-        <Outlet />
-      </main>
+        <main className="mx-auto max-w-6xl px-4 py-8">
+          <Outlet />
+        </main>
 
-      <footer className="mt-12 border-t border-border bg-background/50">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-4 py-6 text-xs text-muted-foreground sm:flex-row">
-          <p>© 2026 Български Trainer · Built for foreigners surviving Bulgaria 🇧🇬</p>
-          <nav className="flex items-center gap-4">
-            <Link to="/terms" className="hover:text-foreground">Terms</Link>
-            <Link to="/privacy" className="hover:text-foreground">Privacy</Link>
-          </nav>
-        </div>
-      </footer>
-      <CookieBanner />
-    </div>
+        <footer className="mt-12 border-t border-border bg-background/50">
+          <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-4 py-6 text-xs text-muted-foreground sm:flex-row">
+            <p>© 2026 Български Trainer · Built for foreigners surviving Bulgaria 🇧🇬</p>
+            <nav className="flex items-center gap-4">
+              <Link to="/terms" className="hover:text-foreground">
+                Terms
+              </Link>
+              <Link to="/privacy" className="hover:text-foreground">
+                Privacy
+              </Link>
+            </nav>
+          </div>
+        </footer>
+        <CookieBanner />
+      </div>
     </AuthProvider>
   );
 }
