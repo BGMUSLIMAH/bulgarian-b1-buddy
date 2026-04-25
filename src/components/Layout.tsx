@@ -56,28 +56,13 @@ function NavLink({
 
 function Logo() {
   return (
-    <Link to="/" className="flex items-center gap-2 shrink-0">
-      <svg width="36" height="36" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
-        <clipPath id="circle-clip">
-          <circle cx="18" cy="18" r="17" />
-        </clipPath>
-        <circle cx="18" cy="18" r="17" fill="#fff" stroke="#2a2a1e" strokeWidth="1" />
-        <rect x="1" y="1" width="34" height="11.3" fill="#ffffff" clipPath="url(#circle-clip)" />
-        <rect x="1" y="12.3" width="34" height="11.3" fill="#00966E" clipPath="url(#circle-clip)" />
-        <rect x="1" y="23.6" width="34" height="11.4" fill="#D62612" clipPath="url(#circle-clip)" />
-        <text
-          x="18"
-          y="23"
-          textAnchor="middle"
-          fontSize="13"
-          fontWeight="800"
-          fontFamily="system-ui,sans-serif"
-          fill="#1a1a0e"
-          letterSpacing="-0.5"
-        >
-          БТ
-        </text>
-      </svg>
+    <Link to="/" className="flex items-center gap-3 shrink-0">
+      <img
+        src="/icon-512.PNG"
+        alt="Български Trainer"
+        className="h-10 w-10 rounded-xl object-cover"
+      />
+
       <span className="font-display text-xl font-black tracking-tight text-foreground leading-none">
         Български<span className="text-[#00966E]"> Trainer</span>
       </span>
