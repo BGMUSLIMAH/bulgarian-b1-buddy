@@ -19,7 +19,7 @@ const TABS = [
   { to: "/reading", label: "Reading" },
   { to: "/evaluation", label: "Evaluation" },
   { to: "/citizenship-prep", label: "🏛️ Citizenship" },
-  { to: "/medical-bg", label: "🏥 Medical BG" },
+  { to: "/medical-bg", label: "🏥 Medical БГ" },
   { to: "/leaderboard", label: "🏆 Leaderboard" },
   { to: "/progress", label: "Progress" },
 ] as const;
