@@ -210,7 +210,7 @@ function PracticeTestTab() {
   function next() {
     if (picked === null) return;
     if (idx + 1 >= total) {
-      const score = answers.reduce(
+      const score = answers.reduce<number>(
         (acc, a, i) => acc + (a === MEDICAL_QUESTIONS[i].correct ? 1 : 0),
         0,
       );
@@ -235,7 +235,7 @@ function PracticeTestTab() {
   }
 
   if (done) {
-    const score = answers.reduce(
+    const score = answers.reduce<number>(
       (acc, a, i) => acc + (a === MEDICAL_QUESTIONS[i].correct ? 1 : 0),
       0,
     );

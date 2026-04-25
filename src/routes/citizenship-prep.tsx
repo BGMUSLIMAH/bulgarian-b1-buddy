@@ -117,7 +117,7 @@ function ExamRunner({ exam, onExit }: { exam: CitizenshipExam; onExit: () => voi
   function next() {
     if (picked === null) return;
     if (idx + 1 >= total) {
-      const score = answers.reduce(
+      const score = answers.reduce<number>(
         (acc, ans, i) => acc + (ans === exam.questions[i].correct ? 1 : 0),
         0,
       );
@@ -130,7 +130,7 @@ function ExamRunner({ exam, onExit }: { exam: CitizenshipExam; onExit: () => voi
   }
 
   if (done) {
-    const score = answers.reduce(
+    const score = answers.reduce<number>(
       (acc, ans, i) => acc + (ans === exam.questions[i].correct ? 1 : 0),
       0,
     );
