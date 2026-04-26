@@ -31,8 +31,8 @@ function Dashboard() {
         <p className="text-sm uppercase tracking-widest text-primary">Bulgarian · B1 Track</p>
         <h1 className="mt-2 text-4xl font-bold sm:text-5xl">Здравей! Let's reach <span className="text-primary">B1</span>.</h1>
         <p className="mt-3 max-w-2xl text-muted-foreground">
-          A focused trainer for real-life and aviation/mechanical Bulgarian. Vocabulary, conjugations,
-          listening, speaking, reading, and a level evaluation — all offline-ready.
+          Built for foreigners surviving Bulgaria 🇧🇬"
+  Real words for the immigration office, the doctor, the landlord, and the market — not just tourist phrases.
         </p>
         <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-5">
           <Stat label="Words" value={WORDS.length} />
