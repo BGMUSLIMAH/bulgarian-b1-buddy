@@ -1,7 +1,7 @@
 // Local persistent stats stored in localStorage + Bulgarian text-to-speech.
-// TTS uses the public Google Translate audio endpoint as the primary source
-// (reliable BG voice, no API key needed) and falls back to the browser's
-// built-in speechSynthesis if the network request fails.
+// Progress is written to localStorage immediately (offline-safe) and then
+// synced to Supabase in the background whenever the user is logged in.
+// This ensures phone and laptop always converge to the same state.
 
 const KEY = "btb1_progress_v2";
 
@@ -11,10 +11,8 @@ export interface Stats {
   perWord: Record<string, { correct: number; wrong: number; streak: number }>;
   perCategory: Record<string, { correct: number; wrong: number }>;
   evaluations: { date: string; score: number; total: number; level: string }[];
-  // Gamification
   xp: number;
-  // Daily streak — counted in calendar days the user practiced at least once
-  lastPracticeDate: string | null; // YYYY-MM-DD
+  lastPracticeDate: string | null;
   streakDays: number;
 }
 
@@ -43,7 +41,88 @@ export function loadStats(): Stats {
 export function saveStats(s: Stats) {
   if (typeof window === "undefined") return;
   localStorage.setItem(KEY, JSON.stringify(s));
+  // Fire-and-forget sync to Supabase — no await, never blocks the UI
+  syncToSupabase(s);
 }
+
+// ── Supabase sync ─────────────────────────────────────────────────────────
+// Lazily imports the supabase client to avoid circular deps and SSR issues.
+// Silently fails if not configured or user is not logged in.
+
+async function syncToSupabase(s: Stats) {
+  try {
+    const { supabase } = await import("@/lib/supabase");
+    if (!supabase) return;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    await supabase.from("user_progress").upsert({
+      user_id: user.id,
+      correct: s.correct,
+      wrong: s.wrong,
+      xp: s.xp,
+      streak_days: s.streakDays,
+      last_practice_date: s.lastPracticeDate,
+      per_word: s.perWord,
+      per_category: s.perCategory,
+    }, { onConflict: "user_id" });
+  } catch {
+    // Silently ignore — localStorage is source of truth
+  }
+}
+
+// Pull latest stats from Supabase and merge with localStorage.
+// Call this on app load when user is logged in.
+// Supabase wins for aggregate counts; localStorage wins for perWord detail
+// if Supabase has none (first login on new device).
+export async function syncFromSupabase(): Promise<void> {
+  try {
+    const { supabase } = await import("@/lib/supabase");
+    if (!supabase) return;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from("user_progress")
+      .select("*")
+      .eq("user_id", user.id)
+      .single();
+
+    if (error || !data) return;
+
+    const local = loadStats();
+
+    // Merge: take the maximum of each field so progress is never lost
+    const merged: Stats = {
+      correct: Math.max(local.correct, data.correct ?? 0),
+      wrong: Math.max(local.wrong, data.wrong ?? 0),
+      xp: Math.max(local.xp, data.xp ?? 0),
+      streakDays: Math.max(local.streakDays, data.streak_days ?? 0),
+      lastPracticeDate: local.lastPracticeDate ?? data.last_practice_date ?? null,
+      perWord: { ...(data.per_word ?? {}), ...local.perWord },
+      perCategory: { ...(data.per_category ?? {}), ...local.perCategory },
+      evaluations: local.evaluations,
+    };
+
+    // Save merged result back to both localStorage and Supabase
+    localStorage.setItem(KEY, JSON.stringify(merged));
+    // Push merged back to Supabase
+    await supabase.from("user_progress").upsert({
+      user_id: user.id,
+      correct: merged.correct,
+      wrong: merged.wrong,
+      xp: merged.xp,
+      streak_days: merged.streakDays,
+      last_practice_date: merged.lastPracticeDate,
+      per_word: merged.perWord,
+      per_category: merged.perCategory,
+    }, { onConflict: "user_id" });
+  } catch {
+    // Silently ignore
+  }
+}
+
+// ── Streak helpers ────────────────────────────────────────────────────────
 
 function todayStr(): string {
   return new Date().toISOString().slice(0, 10);
@@ -65,6 +144,8 @@ function bumpStreak(s: Stats) {
   }
   s.lastPracticeDate = today;
 }
+
+// ── Core progress recording ───────────────────────────────────────────────
 
 export function recordAnswer(key: string, isCorrect: boolean, category?: string) {
   const s = loadStats();
@@ -88,18 +169,16 @@ export function recordAnswer(key: string, isCorrect: boolean, category?: string)
     s.perCategory[category] = pc;
   }
 
-  // XP: +10 correct, +2 wrong (still tried)
   s.xp += isCorrect ? 10 : 2;
-
   bumpStreak(s);
-  saveStats(s);
+  saveStats(s); // saves to localStorage AND syncs to Supabase
 }
 
 export function recordEvaluation(score: number, total: number, level: string) {
   const s = loadStats();
   s.evaluations.unshift({ date: new Date().toISOString(), score, total, level });
   s.evaluations = s.evaluations.slice(0, 20);
-  s.xp += score * 5; // bonus XP for evaluations
+  s.xp += score * 5;
   bumpStreak(s);
   saveStats(s);
 }
@@ -117,20 +196,22 @@ export function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-// XP -> level system
+// ── XP / Level system ─────────────────────────────────────────────────────
+
 export interface LevelInfo {
   level: number;
   title: string;
-  current: number; // xp into this level
-  next: number;   // xp needed for next level
+  current: number;
+  next: number;
   pct: number;
 }
+
 const LEVEL_TITLES = [
   "Beginner", "Curious", "Explorer", "A1 Learner", "A1 Advanced",
   "A2 Learner", "A2 Strong", "B1 Apprentice", "B1 Confident", "B1 Master",
 ];
+
 export function levelFromXP(xp: number): LevelInfo {
-  // Each level needs 200 XP more than the previous: L1=200, L2=400 cumulative, etc.
   let level = 0;
   let acc = 0;
   let need = 200;
@@ -145,14 +226,26 @@ export function levelFromXP(xp: number): LevelInfo {
   return { level: level + 1, title, current, next: need, pct };
 }
 
-// "Mastered" = answered correctly 3+ times overall (lifetime correct count).
-// Streak still tracked separately and shown with a star ⭐ on the progress page.
-export const MASTERY_THRESHOLD = 3;
+// ── Mastery ───────────────────────────────────────────────────────────────
+// Lowered from 3 → 2 correct answers to keep users feeling momentum.
+// Users see the ⭐ mastered badge faster which is motivating.
+
+export const MASTERY_THRESHOLD = 2;
+
 export function masteredCount(s: Stats): number {
   return Object.values(s.perWord).filter((w) => w.correct >= MASTERY_THRESHOLD).length;
 }
 
-// Validate a question/answer pair — rejects empty, underscore-only, or whitespace-only strings.
+// ── App stats (displayed on homepage) ────────────────────────────────────
+// Exact counts as of current data files.
+export const APP_STATS = {
+  wordCount: 683,
+  verbCount: 258,
+  verbsWithTenses: 32,
+};
+
+// ── Text validation ───────────────────────────────────────────────────────
+
 export function isValidText(s: unknown): s is string {
   if (typeof s !== "string") return false;
   const trimmed = s.trim();
@@ -161,20 +254,14 @@ export function isValidText(s: unknown): s is string {
   return true;
 }
 
-// ---------------- TTS ----------------
-//
-// Uses Google Translate's free TTS endpoint (translate.google.com/translate_tts)
-// for high-quality Bulgarian audio. Has no quota for short single-word/sentence
-// requests in a learning app context. Falls back to the browser SpeechSynthesis
-// if the audio request fails (e.g. offline).
+// ── TTS ───────────────────────────────────────────────────────────────────
+// Primary: Cloudflare Worker proxy → Google Translate TTS (Bulgarian voice)
+// Fallback: browser SpeechSynthesis
 
 const ttsCache = new Map<string, string>();
 let currentAudio: HTMLAudioElement | null = null;
 
 function googleTtsUrl(text: string): string {
-  // Google's TTS expects URL-encoded text and tl=bg for Bulgarian.
-  // The "client=tw-ob" param is the well-known public path used by browser
-  // extensions; "ttsspeed=1" is normal speed, "0.7" slower. We use 1.
   const enc = encodeURIComponent(text);
   return `https://bg-tts-proxy.amrani-amine-aero.workers.dev/?text=${enc}`;
 }
@@ -194,14 +281,11 @@ function browserSpeak(text: string) {
     };
     const voices = window.speechSynthesis.getVoices();
     if (voices.length === 0) {
-      // Voices not yet loaded — wait once, then speak.
       window.speechSynthesis.onvoiceschanged = () => {
         trySpeak();
         window.speechSynthesis.onvoiceschanged = null;
       };
-      // Trigger voice loading
       window.speechSynthesis.getVoices();
-      // Fallback: speak after a short delay anyway
       setTimeout(trySpeak, 250);
     } else {
       trySpeak();
@@ -211,7 +295,7 @@ function browserSpeak(text: string) {
   }
 }
 
-  export function speak(text: string) {
+export function speak(text: string) {
   if (typeof window === "undefined") return;
   if (currentAudio) {
     currentAudio.pause();
