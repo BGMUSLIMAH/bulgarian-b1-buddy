@@ -12,7 +12,7 @@ import {
 } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase, supabaseEnabled } from "./supabase";
-import { loadStats } from "./store";
+import { syncFromSupabase } from "./store";
 
 interface AuthContextValue {
   user: User | null;
@@ -27,46 +27,6 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-const MIGRATED_KEY = "btb1_migrated_to_supabase_v1";
-
-async function migrateLocalProgress(userId: string) {
-  if (!supabase) return;
-  try {
-    if (localStorage.getItem(MIGRATED_KEY) === userId) return;
-    const stats = loadStats();
-    // Upsert one row of progress
-    await supabase.from("user_progress").upsert(
-      {
-        user_id: userId,
-        correct: stats.correct,
-        wrong: stats.wrong,
-        xp: stats.xp,
-        streak_days: stats.streakDays,
-        last_practice_date: stats.lastPracticeDate,
-        per_word: stats.perWord,
-        per_category: stats.perCategory,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "user_id" },
-    );
-    if (stats.evaluations.length > 0) {
-      await supabase.from("evaluation_results").insert(
-        stats.evaluations.map((e) => ({
-          user_id: userId,
-          date: e.date,
-          score: e.score,
-          total: e.total,
-          level: e.level,
-        })),
-      );
-    }
-    localStorage.setItem(MIGRATED_KEY, userId);
-  } catch (err) {
-    // Don't block auth flow on migration errors — table columns may differ.
-    console.warn("Progress migration skipped:", err);
-  }
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
@@ -78,12 +38,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
     // Set up listener BEFORE getSession (per Supabase guidance)
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, sess) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event, sess) => {
       setSession(sess);
       setUser(sess?.user ?? null);
-      if (sess?.user) {
-        // Defer migration to avoid blocking the listener callback
-        setTimeout(() => migrateLocalProgress(sess.user.id), 0);
+      if (sess?.user && (event === "SIGNED_IN" || event === "INITIAL_SESSION")) {
+        // Defer to avoid blocking the listener callback.
+        // syncFromSupabase pulls Supabase data, merges with localStorage,
+        // and writes the winner back to both — fixing cross-device sync.
+        setTimeout(() => syncFromSupabase(), 0);
       }
     });
     supabase.auth.getSession().then(({ data }) => {
@@ -144,7 +106,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth(): AuthContextValue {
   const ctx = useContext(AuthContext);
   if (!ctx) {
-    // Safe default for SSR / before provider mounts
     return {
       user: null,
       session: null,
