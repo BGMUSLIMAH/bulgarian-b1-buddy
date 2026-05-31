@@ -62,6 +62,11 @@ function RootShell({ children }: { children: React.ReactNode }) {
     <html lang="en">
       <head>
         <HeadContent />
+        <script
+          async
+          src="https://cloud.umami.is/script.js"
+          data-website-id="bff4d430-2078-4a1e-bc86-803930542c56"
+        />
       </head>
       <body>
         {children}
@@ -70,7 +75,6 @@ function RootShell({ children }: { children: React.ReactNode }) {
     </html>
   );
 }
-
 const SW_REGISTER = `
 (function () {
   if (!('serviceWorker' in navigator)) return;
