@@ -11,9 +11,9 @@ function ReadingPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Reading</h1>
+        <h1 className="text-3xl font-bold">🎭 Real-life Scenarios</h1>
         <p className="mt-1 text-muted-foreground">
-          Practice with real-life scenarios or short B1 sentences.
+          Step-by-step dialogues for real situations in Bulgaria — immigration office, taxi, delivery, market, doctor and more.
         </p>
       </div>
 
