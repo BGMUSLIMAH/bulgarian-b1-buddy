@@ -217,7 +217,7 @@ function ExamRunner({ exam, onExit }: { exam: CitizenshipExam; onExit: () => voi
         <p className="whitespace-pre-line text-sm leading-relaxed text-foreground">
           {exam.passage}
         </p>
-        {showEn && (
+        {showEn && exam.passageEn && (
           <p className="mt-3 whitespace-pre-line border-t border-border pt-3 text-sm italic leading-relaxed text-muted-foreground">
             {exam.passageEn}
           </p>
