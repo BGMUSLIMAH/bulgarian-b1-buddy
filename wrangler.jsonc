@@ -3,5 +3,11 @@
   "name": "tanstack-start-app",
   "compatibility_date": "2025-09-24",
   "compatibility_flags": ["nodejs_compat"],
-  "main": "@tanstack/react-start/server-entry"
+  "main": "@tanstack/react-start/server-entry",
+  "vars": {
+    "VITE_UMAMI_WEBSITE_ID": "bff4d430-2078-4a1e-bc86-803930542c56",
+    "VITE_UMAMI_URL": "https://cloud.umami.is/script.js",
+    "VITE_SUPABASE_URL": "https://pgyjtqxtogurbajgrwdv.supabase.co",
+    "VITE_DEMO_EMAILS": "amrani.amine.aero@gmail.com"
+  }
 }
