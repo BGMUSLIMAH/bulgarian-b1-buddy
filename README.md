@@ -30,4 +30,4 @@ Foreigners living in Bulgaria — expats, students, workers, and aviation mechan
 
 ## License
 
-MIT 
+MIT   .
