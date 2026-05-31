@@ -16,7 +16,7 @@ const PRIMARY_TABS = [
   { to: "/daily", label: "Daily" },
   { to: "/listening", label: "Listening" },
   { to: "/speaking", label: "Speaking" },
-  { to: "/reading", label: "Reading" },
+  { to: "/reading", label: "Scenarios" },
   { to: "/evaluation", label: "Evaluation" },
 ] as const;
 
