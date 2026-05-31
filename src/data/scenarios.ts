@@ -100,7 +100,7 @@ export const SCENARIOS: Scenario[] = [
     dialogue: [
       { speaker: "Вие", bg: "Добър ден. Трябва ми удостоверение с личните ми данни и IBAN.", en: "Good day. I need a certificate with my personal details and IBAN." },
       { speaker: "Банков служител", bg: "За каква цел ви е документът?", en: "What is the document needed for?" },
-      { speaker: "Вие", bg: "За дирекция „Миграция" — за разрешение за пребиваване.", en: "For the Migration Directorate — for a residence permit." },
+      { speaker: "Вие", bg: "За дирекция 'Миграция' — за разрешение за пребиваване.", en: "For the Migration Directorate — for a residence permit." },
       { speaker: "Банков служител", bg: "Разбирам. Имате ли сметка при нас?", en: "I understand. Do you have an account with us?" },
       { speaker: "Вие", bg: "Да. Нужен ми е официален документ с печат.", en: "Yes. I need an official document with a stamp." },
       { speaker: "Банков служител", bg: "Удостоверението ще е готово след двадесет и четири часа. Ще ви се обадим.", en: "The certificate will be ready in twenty-four hours. We will call you." },
@@ -150,7 +150,7 @@ export const SCENARIOS: Scenario[] = [
     dialogue: [
       { speaker: "Охрана", bg: "За какво идвате?", en: "What are you here for?" },
       { speaker: "Вие", bg: "За временно пребиваване — студентско. Трета страна.", en: "For temporary residence — student. Third country national." },
-      { speaker: "Охрана", bg: "Вземете номерче от машината. Изберете „Разрешение за пребиваване".", en: "Take a number from the machine. Select 'Residence Permit'." },
+      { speaker: "Охрана", bg: "Вземете номерче от машината. Изберете 'Разрешение за пребиваване'.", en: "Take a number from the machine. Select 'Residence Permit'." },
       { speaker: "Вие", bg: "На кое гише ще ме викат?", en: "At which counter will they call me?" },
       { speaker: "Охрана", bg: "Гише единадесет, дванадесет или тринадесет.", en: "Counter eleven, twelve, or thirteen." },
       { speaker: "Вие", bg: "Колко време ще чакам приблизително?", en: "How long will I wait approximately?" },
