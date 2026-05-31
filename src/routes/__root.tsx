@@ -94,8 +94,8 @@ const SW_REGISTER = `
 })();
 `;
 
-const UMAMI_ID = import.meta.env.VITE_UMAMI_WEBSITE_ID;
-const UMAMI_URL = import.meta.env.VITE_UMAMI_URL;
+const UMAMI_ID = import.meta.env.VITE_UMAMI_WEBSITE_ID ?? "bff4d430-2078-4a1e-bc86-803930542c56";
+const UMAMI_URL = import.meta.env.VITE_UMAMI_URL ?? "https://cloud.umami.is/script.js";
 
 function RootComponent() {
   return (
