@@ -2,7 +2,7 @@
 // Shows question + 4 options. After picking, displays clear green/red feedback
 // for at least 1.5s, then auto-advances. The card NEVER unmounts to a blank
 // screen — the same card stays mounted between questions and just swaps content.
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { recordAnswer, shuffle } from "@/lib/store";
 
 export interface QuizQuestion {
@@ -22,10 +22,60 @@ interface Props {
   total: number;
 }
 
+// ─── Tiny Web Audio beeps — no files, no dependencies ───────────────────────
+function useQuizSounds() {
+  const ctx = useRef<AudioContext | null>(null);
+
+  function getCtx() {
+    if (!ctx.current) ctx.current = new AudioContext();
+    return ctx.current;
+  }
+
+  function playCorrect() {
+    try {
+      const ac = getCtx();
+      const osc = ac.createOscillator();
+      const gain = ac.createGain();
+      osc.connect(gain);
+      gain.connect(ac.destination);
+      osc.type = "sine";
+      // Two rising tones: 600 Hz → 900 Hz
+      osc.frequency.setValueAtTime(600, ac.currentTime);
+      osc.frequency.setValueAtTime(900, ac.currentTime + 0.12);
+      gain.gain.setValueAtTime(0.25, ac.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.35);
+      osc.start(ac.currentTime);
+      osc.stop(ac.currentTime + 0.35);
+    } catch (_) { /* silently ignore if audio blocked */ }
+  }
+
+  function playWrong() {
+    try {
+      const ac = getCtx();
+      const osc = ac.createOscillator();
+      const gain = ac.createGain();
+      osc.connect(gain);
+      gain.connect(ac.destination);
+      osc.type = "sawtooth";
+      // Low buzzy tone dropping: 300 Hz → 180 Hz
+      osc.frequency.setValueAtTime(300, ac.currentTime);
+      osc.frequency.setValueAtTime(180, ac.currentTime + 0.15);
+      gain.gain.setValueAtTime(0.2, ac.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.35);
+      osc.start(ac.currentTime);
+      osc.stop(ac.currentTime + 0.35);
+    } catch (_) { /* silently ignore if audio blocked */ }
+  }
+
+  return { playCorrect, playWrong };
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 export function QuizCard({ question, onAnswered, onNext, index, total }: Props) {
   const [options, setOptions] = useState<string[]>([]);
   const [picked, setPicked] = useState<string | null>(null);
   const [showHint, setShowHint] = useState(false);
+  const { playCorrect, playWrong } = useQuizSounds();
 
   useEffect(() => {
     setOptions(shuffle([question.correct, ...question.distractors]));
@@ -39,7 +89,8 @@ export function QuizCard({ question, onAnswered, onNext, index, total }: Props) 
     const correct = opt === question.correct;
     recordAnswer(question.key, correct, question.category);
     onAnswered(correct);
-    // No auto-advance — feedback (green/red) stays visible until user clicks Next.
+    if (correct) playCorrect();
+    else playWrong();
   }
 
   function goNext() {
