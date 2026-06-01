@@ -206,24 +206,31 @@ export interface LevelInfo {
   pct: number;
 }
 
-const LEVEL_TITLES = [
-  "Beginner", "Curious", "Explorer", "A1 Learner", "A1 Advanced",
-  "A2 Learner", "A2 Strong", "B1 Apprentice", "B1 Confident", "B1 Master",
-];
-
+import { getLevelMeta } from "@/components/LevelUpCelebration";
+ 
+// XP thresholds per level — gentle curve so early levels feel fast,
+// later levels take real effort. Caps at level 20.
+//
+// Level 1  →   200 XP
+// Level 2  →   350 XP
+// Level 3  →   500 XP
+// Level 4  →   700 XP  (roughly 70 correct answers from level 1)
+// ...
+// Level 20 →  3,500 XP accumulated
+ 
 export function levelFromXP(xp: number): LevelInfo {
   let level = 0;
   let acc = 0;
   let need = 200;
-  while (xp >= acc + need && level < 49) {
+  while (xp >= acc + need && level < 19) { // cap at level 20
     acc += need;
     level += 1;
-    need = 200 + level * 100;
+    need = 200 + level * 150; // steeper than before — each step costs more
   }
   const current = xp - acc;
   const pct = Math.min(100, Math.round((current / need) * 100));
-  const title = LEVEL_TITLES[Math.min(level, LEVEL_TITLES.length - 1)];
-  return { level: level + 1, title, current, next: need, pct };
+  const meta = getLevelMeta(level + 1);
+  return { level: level + 1, title: meta.title, current, next: need, pct };
 }
 
 // ── Mastery ───────────────────────────────────────────────────────────────
