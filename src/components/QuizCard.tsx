@@ -22,7 +22,7 @@ interface Props {
   total: number;
 }
 
-// ─── Tiny Web Audio beeps — no files, no dependencies ───────────────────────
+// ─── Duolingo-style sounds via Web Audio ─────────────────────────────────────
 function useQuizSounds() {
   const ctx = useRef<AudioContext | null>(null);
 
@@ -31,40 +31,48 @@ function useQuizSounds() {
     return ctx.current;
   }
 
+  function playNote(
+    ac: AudioContext,
+    freq: number,
+    startTime: number,
+    duration: number,
+    type: OscillatorType = "sine",
+    volume = 0.28,
+  ) {
+    const osc = ac.createOscillator();
+    const gain = ac.createGain();
+    // Soft attack then pluck-style decay
+    gain.gain.setValueAtTime(0, startTime);
+    gain.gain.linearRampToValueAtTime(volume, startTime + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, startTime);
+    osc.connect(gain);
+    gain.connect(ac.destination);
+    osc.start(startTime);
+    osc.stop(startTime + duration);
+  }
+
   function playCorrect() {
     try {
       const ac = getCtx();
-      const osc = ac.createOscillator();
-      const gain = ac.createGain();
-      osc.connect(gain);
-      gain.connect(ac.destination);
-      osc.type = "sine";
-      // Two rising tones: 600 Hz → 900 Hz
-      osc.frequency.setValueAtTime(600, ac.currentTime);
-      osc.frequency.setValueAtTime(900, ac.currentTime + 0.12);
-      gain.gain.setValueAtTime(0.25, ac.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.35);
-      osc.start(ac.currentTime);
-      osc.stop(ac.currentTime + 0.35);
-    } catch (_) { /* silently ignore if audio blocked */ }
+      const t = ac.currentTime;
+      // Cheerful ascending major arpeggio: C5 → E5 → G5 → C6
+      playNote(ac, 523.25, t + 0.00, 0.18); // C5
+      playNote(ac, 659.25, t + 0.10, 0.18); // E5
+      playNote(ac, 783.99, t + 0.20, 0.18); // G5
+      playNote(ac, 1046.5, t + 0.30, 0.32); // C6 — held longer for satisfaction
+    } catch (_) {}
   }
 
   function playWrong() {
     try {
       const ac = getCtx();
-      const osc = ac.createOscillator();
-      const gain = ac.createGain();
-      osc.connect(gain);
-      gain.connect(ac.destination);
-      osc.type = "sawtooth";
-      // Low buzzy tone dropping: 300 Hz → 180 Hz
-      osc.frequency.setValueAtTime(300, ac.currentTime);
-      osc.frequency.setValueAtTime(180, ac.currentTime + 0.15);
-      gain.gain.setValueAtTime(0.2, ac.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.35);
-      osc.start(ac.currentTime);
-      osc.stop(ac.currentTime + 0.35);
-    } catch (_) { /* silently ignore if audio blocked */ }
+      const t = ac.currentTime;
+      // Two dull descending sawtooth tones — classic "dun-dun" wrong answer
+      playNote(ac, 380, t + 0.00, 0.22, "sawtooth", 0.18);
+      playNote(ac, 280, t + 0.22, 0.32, "sawtooth", 0.14);
+    } catch (_) {}
   }
 
   return { playCorrect, playWrong };
