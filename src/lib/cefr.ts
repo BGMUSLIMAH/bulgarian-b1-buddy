@@ -1,6 +1,7 @@
-// CEFR placement test data: 5 sections, 60 questions total.
-// Sections 1 (vocab) & 4 (listening) are generated from existing word data.
-// Sections 2 (grammar), 3 (reading), 5 (writing) are hand-written.
+// CEFR placement test data — v2
+// All question prompts are NOW IN BULGARIAN (as real Bulgarian CEFR exams are).
+// Pool sizes: Vocab 40+, Grammar 60+, Reading 5 passages, Listening 20+, Writing 20+
+// Each call to buildCefrTest() draws a fresh randomised subset — never the same test twice.
 import { WORDS, type Word } from "@/data/words";
 import { shuffle, isValidText } from "@/lib/store";
 
@@ -10,50 +11,98 @@ export type SectionId = "vocab" | "grammar" | "reading" | "listening" | "writing
 export interface CefrQuestion {
   id: string;
   section: SectionId;
+  /** The question prompt — always in Bulgarian */
   prompt: string;
-  /** Optional Bulgarian audio text — plays via TTS when provided (listening section). */
+  /** Optional Bulgarian TTS audio text (listening section) */
   audio?: string;
-  /** Optional reading passage shown above the question (reading section). */
-  passage?: { bg: string; en?: string } | null;
+  /** Optional reading passage (reading section) */
+  passage?: { bg: string } | null;
   options: string[];
+  /** Index of the correct option */
   correct: number;
 }
 
-export const SECTIONS: { id: SectionId; label: string; emoji: string; count: number; description: string }[] = [
-  { id: "vocab",     label: "Vocabulary",      emoji: "📚", count: 15, description: "Recognize Bulgarian words and pick their English meaning." },
-  { id: "grammar",   label: "Grammar",         emoji: "🧩", count: 15, description: "Fill the blank: tenses, articles, pronouns, modals." },
-  { id: "reading",   label: "Reading",         emoji: "📖", count: 10, description: "Read a short text and answer comprehension questions." },
-  { id: "listening", label: "Listening",       emoji: "🎧", count: 10, description: "Listen to a Bulgarian sentence and pick the meaning." },
-  { id: "writing",   label: "Writing / Active",emoji: "✍️", count: 10, description: "Pick the correct Bulgarian phrase for a real-life situation." },
+export const SECTIONS: {
+  id: SectionId;
+  label: string;
+  emoji: string;
+  count: number;
+  description: string;
+}[] = [
+  {
+    id: "vocab",
+    label: "Речник",
+    emoji: "📚",
+    count: 15,
+    description: "Познавате ли значението на тези думи?",
+  },
+  {
+    id: "grammar",
+    label: "Граматика",
+    emoji: "🧩",
+    count: 15,
+    description: "Попълнете празното място с правилната форма.",
+  },
+  {
+    id: "reading",
+    label: "Четене",
+    emoji: "📖",
+    count: 10,
+    description: "Прочетете текста и отговорете на въпросите.",
+  },
+  {
+    id: "listening",
+    label: "Слушане",
+    emoji: "🎧",
+    count: 10,
+    description: "Изслушайте изречението и изберете правилния отговор.",
+  },
+  {
+    id: "writing",
+    label: "Говорене и писане",
+    emoji: "✍️",
+    count: 10,
+    description: "Изберете правилния израз за дадената ситуация.",
+  },
 ];
 
-// ---------- Section 1: Vocabulary recognition (auto from WORDS) ----------
+// ─── Section 1: Vocabulary (auto-generated from WORDS data) ─────────────────
 function buildVocab(count: number): CefrQuestion[] {
-  const tierA = WORDS.filter((w) => ["daily", "numbers", "food", "market"].includes(w.category));
-  const tierB = WORDS.filter((w) => ["work", "healthcare", "education", "transport", "hospitality"].includes(w.category));
-  const tierC = WORDS.filter((w) => ["government", "it", "mechanical", "construction"].includes(w.category));
+  const tierA = WORDS.filter((w) =>
+    ["daily", "numbers", "food", "market"].includes(w.category)
+  );
+  const tierB = WORDS.filter((w) =>
+    ["work", "healthcare", "education", "transport", "hospitality"].includes(
+      w.category
+    )
+  );
+  const tierC = WORDS.filter((w) =>
+    ["government", "it", "mechanical", "construction"].includes(w.category)
+  );
   const valid = (w: Word) => isValidText(w.bg) && isValidText(w.en);
+  const allEN = WORDS.filter(valid).map((w) => w.en);
+
   const a = shuffle(tierA.filter(valid));
   const b = shuffle(tierB.filter(valid));
   const c = shuffle(tierC.filter(valid));
-  const allEN = WORDS.filter(valid).map((w) => w.en);
 
-  const result: CefrQuestion[] = [];
   const perTier = Math.floor(count / 3);
-  const remainder = count - perTier * 3;
+  const rem = count - perTier * 3;
   const groups = [
-    a.slice(0, perTier + (remainder > 0 ? 1 : 0)),
-    b.slice(0, perTier + (remainder > 1 ? 1 : 0)),
+    a.slice(0, perTier + (rem > 0 ? 1 : 0)),
+    b.slice(0, perTier + (rem > 1 ? 1 : 0)),
     c.slice(0, perTier),
   ];
 
+  const result: CefrQuestion[] = [];
   groups.flat().forEach((w, i) => {
     const distractors = shuffle(allEN.filter((x) => x !== w.en)).slice(0, 3);
     const opts = shuffle([w.en, ...distractors]);
     result.push({
       id: `vocab-${i}-${w.bg}`,
       section: "vocab",
-      prompt: `What does «${w.bg}» mean in English?`,
+      // Prompt in Bulgarian: "Какво означава «дума»?"
+      prompt: `Какво означава «${w.bg}» на английски?`,
       options: opts,
       correct: opts.indexOf(w.en),
     });
@@ -61,141 +110,842 @@ function buildVocab(count: number): CefrQuestion[] {
   return result;
 }
 
-// ---------- Section 4: Listening (hand-picked survival sentences) ----------
+// ─── Section 4: Listening ────────────────────────────────────────────────────
+// Pool of 22 sentences. 10 are picked randomly per test.
+// Answers/distractors are in Bulgarian to match real exam style.
 function buildListening(count: number): CefrQuestion[] {
-  const PROMPTS: { bg: string; en: string; distractors: string[] }[] = [
-    { bg: "Колко струва това?",                       en: "How much does this cost?",               distractors: ["Where is the shop?", "Do you have a bag?", "I want to pay."] },
-    { bg: "Срещата е в десет часа.",                   en: "The meeting is at ten o'clock.",          distractors: ["The meeting is at two.", "The class starts in ten minutes.", "It costs ten lev."] },
-    { bg: "Имам температура от два дни.",               en: "I have had a fever for two days.",        distractors: ["I have a headache today.", "I have an appointment in two days.", "My throat hurts a little."] },
-    { bg: "Платете на гише номер три.",                 en: "Pay at counter number three.",            distractors: ["Wait at counter number three.", "The third floor is closed.", "Bring three copies."] },
-    { bg: "Половин килограм сирене, моля.",             en: "Half a kilo of cheese, please.",          distractors: ["Half a kilo of butter, please.", "Two kilos of cheese, please.", "A bottle of water, please."] },
-    { bg: "Утре ще отида на лекар.",                    en: "Tomorrow I will go to the doctor.",       distractors: ["Yesterday I went to the doctor.", "I am going to the pharmacy now.", "I have no doctor here."] },
-    { bg: "Договорът е валиден до края на годината.",   en: "The contract is valid until the end of the year.", distractors: ["The contract starts next year.", "The deadline was last year.", "There is no contract."] },
-    { bg: "Може ли касова бележка?",                    en: "Can I have a receipt?",                   distractors: ["Can I have a bag?", "Can I pay by card?", "Can you give me change?"] },
-    { bg: "Завийте надясно след светофара.",             en: "Turn right after the traffic light.",     distractors: ["Turn left at the next street.", "Stop at the traffic light.", "Go straight to the square."] },
-    { bg: "Депозитът е сто и петдесет лева.",            en: "The deposit is one hundred fifty levs.",  distractors: ["The rent is one hundred fifty levs.", "The deposit is fifty levs.", "The fee is five hundred levs."] },
-    { bg: "Имате ли разрешение за пребиваване?",         en: "Do you have a residence permit?",         distractors: ["Do you have a Bulgarian passport?", "Do you have a translator?", "Do you have a contract?"] },
-    { bg: "Ще се обадя след половин час.",               en: "I will call in half an hour.",            distractors: ["I called half an hour ago.", "I will arrive in half an hour.", "I'll wait for half an hour."] },
+  const POOL: { bg: string; correct: string; distractors: string[] }[] = [
+    {
+      bg: "Колко струва това?",
+      correct: "Питат за цената.",
+      distractors: [
+        "Питат за адреса.",
+        "Питат за часа.",
+        "Питат за размера.",
+      ],
+    },
+    {
+      bg: "Срещата е в десет часа.",
+      correct: "Среща в десет часа.",
+      distractors: [
+        "Среща в два часа.",
+        "Часът е десет.",
+        "Класът започва след десет минути.",
+      ],
+    },
+    {
+      bg: "Имам температура от два дни.",
+      correct: "Лицето е болно два дни.",
+      distractors: [
+        "Лицето има главоболие.",
+        "Прегледът е след два дни.",
+        "Гърлото го боли малко.",
+      ],
+    },
+    {
+      bg: "Платете на гише номер три.",
+      correct: "Трябва да се плати на гише три.",
+      distractors: [
+        "Изчакайте на гише три.",
+        "Третият етаж е затворен.",
+        "Донесете три копия.",
+      ],
+    },
+    {
+      bg: "Половин килограм сирене, моля.",
+      correct: "Поръчват половин кило сирене.",
+      distractors: [
+        "Поръчват половин кило масло.",
+        "Поръчват две кила сирене.",
+        "Поръчват бутилка вода.",
+      ],
+    },
+    {
+      bg: "Утре ще отида на лекар.",
+      correct: "Утре има лекарски преглед.",
+      distractors: [
+        "Вчера е ходил на лекар.",
+        "Сега отива до аптеката.",
+        "Тук няма лекар.",
+      ],
+    },
+    {
+      bg: "Договорът е валиден до края на годината.",
+      correct: "Договорът изтича в края на годината.",
+      distractors: [
+        "Договорът започва следващата година.",
+        "Срокът е изтекъл миналата година.",
+        "Няма договор.",
+      ],
+    },
+    {
+      bg: "Може ли касова бележка?",
+      correct: "Искат касова бележка.",
+      distractors: [
+        "Искат торбичка.",
+        "Питат дали може с карта.",
+        "Питат за рестото.",
+      ],
+    },
+    {
+      bg: "Завийте надясно след светофара.",
+      correct: "Трябва да се завие надясно след светофара.",
+      distractors: [
+        "Завийте наляво на следващата улица.",
+        "Спрете на светофара.",
+        "Вървете направо до площада.",
+      ],
+    },
+    {
+      bg: "Депозитът е сто и петдесет лева.",
+      correct: "Депозитът е 150 лева.",
+      distractors: [
+        "Наемът е 150 лева.",
+        "Депозитът е 50 лева.",
+        "Таксата е 500 лева.",
+      ],
+    },
+    {
+      bg: "Имате ли разрешение за пребиваване?",
+      correct: "Питат за разрешение за пребиваване.",
+      distractors: [
+        "Питат за български паспорт.",
+        "Питат за преводач.",
+        "Питат за трудов договор.",
+      ],
+    },
+    {
+      bg: "Ще се обадя след половин час.",
+      correct: "Ще се обади след 30 минути.",
+      distractors: [
+        "Обади се преди половин час.",
+        "Ще пристигне след половин час.",
+        "Ще изчака половин час.",
+      ],
+    },
+    {
+      bg: "Магазинът е затворен в неделя.",
+      correct: "В неделя магазинът не работи.",
+      distractors: [
+        "Магазинът е отворен всеки ден.",
+        "В неделя магазинът работи само до обяд.",
+        "Магазинът е затворен в събота.",
+      ],
+    },
+    {
+      bg: "Трябва ми нотариално заверен превод.",
+      correct: "Нужен е официален превод с нотариус.",
+      distractors: [
+        "Нужен е обикновен превод.",
+        "Нужен е превод на английски.",
+        "Нужен е превод само на първата страница.",
+      ],
+    },
+    {
+      bg: "Вземайте таблетките три пъти дневно след хранене.",
+      correct: "Лекарството се взима три пъти на ден след ядене.",
+      distractors: [
+        "Лекарството се взима веднъж на ден.",
+        "Лекарството се взима на гладно.",
+        "Лекарството се взима само вечер.",
+      ],
+    },
+    {
+      bg: "Отивам на работа с метрото.",
+      correct: "Използва метрото за работа.",
+      distractors: [
+        "Ходи пеша до работа.",
+        "Кара кола до работа.",
+        "Взима автобус до работа.",
+      ],
+    },
+    {
+      bg: "Имате ли свободна маса за двама?",
+      correct: "Питат за маса за двама в ресторант.",
+      distractors: [
+        "Питат за маса за четирима.",
+        "Питат за свободна стая.",
+        "Питат за работно място.",
+      ],
+    },
+    {
+      bg: "Полетът е закъснял с един час.",
+      correct: "Самолетът закъснява с час.",
+      distractors: [
+        "Полетът е отменен.",
+        "Полетът е навреме.",
+        "Полетът закъснява с два часа.",
+      ],
+    },
+    {
+      bg: "Подпишете тук, моля.",
+      correct: "Трябва да се постави подпис.",
+      distractors: [
+        "Трябва да се постави печат.",
+        "Трябва да се плати таксата.",
+        "Трябва да се попълни формуляр.",
+      ],
+    },
+    {
+      bg: "Разписанието е на таблото.",
+      correct: "Разписанието може да се види на таблото.",
+      distractors: [
+        "Разписанието е при касата.",
+        "Разписанието е на уебсайта.",
+        "Разписанието е при началника на гарата.",
+      ],
+    },
+    {
+      bg: "Нямам нищо за митница.",
+      correct: "Лицето няма стоки за деклариране.",
+      distractors: [
+        "Лицето носи стоки за деклариране.",
+        "Лицето е пропуснало митницата.",
+        "Лицето трябва да декларира парите си.",
+      ],
+    },
+    {
+      bg: "Здравната осигуровка не покрива това.",
+      correct: "Разходът не се покрива от осигуровката.",
+      distractors: [
+        "Осигуровката покрива всичко.",
+        "Трябва да се смени лекарят.",
+        "Лекарят не приема тази осигуровка.",
+      ],
+    },
   ];
-  const picked = shuffle(PROMPTS).slice(0, count);
+
+  const picked = shuffle(POOL).slice(0, count);
   return picked.map((p, i) => {
-    const opts = shuffle([p.en, ...p.distractors]);
+    const opts = shuffle([p.correct, ...p.distractors]);
     return {
       id: `listen-${i}`,
       section: "listening",
-      prompt: "🎧 Listen and pick the meaning. (Tap ▶ to replay.)",
+      // Prompt fully in Bulgarian
+      prompt: "🎧 Изслушайте изречението и изберете правилния отговор. (Натиснете ▶ за повторение.)",
       audio: p.bg,
       options: opts,
-      correct: opts.indexOf(p.en),
+      correct: opts.indexOf(p.correct),
     };
   });
 }
 
-// ---------- Section 2: Grammar (hand-written, 30 questions — 15 picked per test) ----------
-const GRAMMAR: Omit<CefrQuestion, "section">[] = [
-  // A1/A2 — verb conjugation
-  { id: "g1",  prompt: "Аз ___ студент от Германия.",                                  options: ["съм","си","е","сме"],                                          correct: 0 },
-  { id: "g2",  prompt: "Тя не ___ добре български.",                                    options: ["говоря","говориш","говори","говорят"],                         correct: 2 },
-  { id: "g3",  prompt: "Децата ___ в двора всеки ден.",                                 options: ["играе","играя","играят","играш"],                               correct: 2 },
-  { id: "g4",  prompt: "— Госпожо, къде ___?",                                          options: ["отивам","отива","отиваш","отивате"],                            correct: 3 },
-  // Pronouns — accusative / dative
-  { id: "g5",  prompt: "Купих си нова книга и бързо ___ прочетох.",                     options: ["ме","те","го","я"],                                             correct: 3 },
-  { id: "g6",  prompt: "Обадих се на Георги и ___ помолих за услуга.",                  options: ["му","ти","го","я"],                                             correct: 2 },
-  { id: "g7",  prompt: "Виждам ___ всеки ден на пазара.",                               options: ["го","му","си","ти"],                                            correct: 0 },
-  { id: "g8",  prompt: "— Ще ми дадеш ли шапката? — Да, ___ ти я дам.",                options: ["ще","ще дам","ще дам ти я","ще я ти дам"],                      correct: 0 },
-  { id: "g9",  prompt: "— Ще донесеш ли играчката на детето? — Да, ___ донеса.",        options: ["ще му я","ще я му","ще донеса му я","ще донеса я му"],          correct: 0 },
-  { id: "g10", prompt: "— Познаваш ли новия колега от Варна? — Не, ___ го познавам.",   options: ["него","не","го не","го"],                                       correct: 1 },
-  // Definite articles
-  { id: "g11", prompt: "Книга___ е на масата.",                                         options: ["а","ят","та","то"],                                             correct: 2 },
-  { id: "g12", prompt: "Стол___ е счупен.",                                             options: ["а","ът","та","то"],                                             correct: 1 },
-  { id: "g13", prompt: "Дете___ спи в стаята.",                                         options: ["а","ът","та","то"],                                             correct: 3 },
-  { id: "g14", prompt: "— Ще купите ли този часовник? — Да, ще купя ___.",              options: ["часовниката","часовника","часовникът","часовниците"],           correct: 1 },
-  { id: "g15", prompt: "— Кой сандвич искате? — ___.",                                  options: ["Топлия","Топълия","Топлиа","Топлият"],                          correct: 3 },
-  // Numerals and agreement
-  { id: "g16", prompt: "На покрива на училището ___ щъркела са свили гнездо.",          options: ["двама","две","два","двете"],                                    correct: 2 },
-  { id: "g17", prompt: "Кажи ми ___ са приятелите ти.",                                 options: ["кой","коя","кое","кои"],                                        correct: 3 },
-  { id: "g18", prompt: "— Колко души има в кабинета? — ___.",                           options: ["Двамата","Две","Два","Двама"],                                  correct: 3 },
-  // Past tense
-  { id: "g19", prompt: "Вчера аз ___ хляб от магазина.",                                options: ["купувам","купих","ще купя","купи"],                             correct: 1 },
-  { id: "g20", prompt: "Миналата година ние ___ в Пловдив.",                             options: ["живеем","живяхме","ще живеем","живеят"],                        correct: 1 },
-  { id: "g21", prompt: "— Защо снощи не дойде? — Много ___ ми се.",                     options: ["спеше","спи","ще спи","спях"],                                  correct: 0 },
-  { id: "g22", prompt: "— Огняне, ходи ли на концерт вчера? — Не, ___ билети.",         options: ["нямаше","няма","нямах","няма да има"],                          correct: 0 },
-  { id: "g23", prompt: "Тя каза ли нещо? — Не, само ___.",                              options: ["смееше","се засмя","засмя се","засмееше се"],                   correct: 2 },
-  // Future and modals
-  { id: "g24", prompt: "Утре ние ___ на лекар.",                                        options: ["отидохме","ще отидем","отиваме","отидете"],                     correct: 1 },
-  { id: "g25", prompt: "Трябва ___ попълня формуляра преди края на деня.",              options: ["да","че","и","за"],                                             correct: 0 },
-  // B1 — perfect and complex sentences
-  { id: "g26", prompt: "Вече цяла седмица съм в София, а още ___ на Витоша.",           options: ["ходила съм е","не ходих","няма да съм ходил","не съм ходила"],  correct: 3 },
-  { id: "g27", prompt: "— Госпожице, вчера бяхте ли на театър? — Да, ___.",             options: ["бяхме","беше","бяха","бях"],                                    correct: 3 },
-  { id: "g28", prompt: "— Деца, ще бъдете ли свободни в неделя? — Не, ___ да бъдем.",  options: ["не ще","няма","няма да","нямаме"],                              correct: 2 },
-  // B1 — passive voice
-  { id: "g29", prompt: "Пушенето в сградата ___.",                                      options: ["не разрешено","разрешено е","не е разрешено","е не разрешено"], correct: 2 },
-  { id: "g30", prompt: "Град Велико Търново ___ от много чужденци.",                    options: ["посещават","посетен","посещаван","се посещава"],                 correct: 3 },
+// ─── Section 2: Grammar ──────────────────────────────────────────────────────
+// 60-question pool. All prompts in Bulgarian.
+// 15 drawn randomly per test — so the test is genuinely different each time.
+const GRAMMAR_POOL: Omit<CefrQuestion, "section">[] = [
+  // ── Present tense / съм ──
+  {
+    id: "g01",
+    prompt: "Аз ___ студент от Германия.",
+    options: ["съм", "си", "е", "сме"],
+    correct: 0,
+  },
+  {
+    id: "g02",
+    prompt: "Тя не ___ добре български.",
+    options: ["говоря", "говориш", "говори", "говорят"],
+    correct: 2,
+  },
+  {
+    id: "g03",
+    prompt: "Децата ___ в двора всеки ден.",
+    options: ["играе", "играя", "играят", "играш"],
+    correct: 2,
+  },
+  {
+    id: "g04",
+    prompt: "— Госпожо, къде ___?",
+    options: ["отивам", "отива", "отиваш", "отивате"],
+    correct: 3,
+  },
+  {
+    id: "g05",
+    prompt: "Ние ___ в нова квартира.",
+    options: ["живея", "живееш", "живеем", "живеят"],
+    correct: 2,
+  },
+  {
+    id: "g06",
+    prompt: "Те ___ в офиса всеки ден.",
+    options: ["работя", "работим", "работят", "работи"],
+    correct: 2,
+  },
+  // ── Pronouns — accusative / dative ──
+  {
+    id: "g07",
+    prompt: "Купих си нова книга и бързо ___ прочетох.",
+    options: ["ме", "те", "го", "я"],
+    correct: 3,
+  },
+  {
+    id: "g08",
+    prompt: "Обадих се на Георги и ___ помолих за услуга.",
+    options: ["му", "ти", "го", "я"],
+    correct: 2,
+  },
+  {
+    id: "g09",
+    prompt: "Виждам ___ всеки ден на пазара.",
+    options: ["го", "му", "си", "ти"],
+    correct: 0,
+  },
+  {
+    id: "g10",
+    prompt: "— Ще ми дадеш ли шапката? — Да, ___ ти я дам.",
+    options: ["ще", "дам", "ще дам ти я", "ще я ти дам"],
+    correct: 0,
+  },
+  {
+    id: "g11",
+    prompt: "— Ще донесеш ли играчката на детето? — Да, ___ донеса.",
+    options: ["ще му я", "ще я му", "ще донеса му я", "ще донеса я му"],
+    correct: 0,
+  },
+  {
+    id: "g12",
+    prompt: "— Познаваш ли новия колега от Варна? — Не, ___ го познавам.",
+    options: ["него", "не", "го не", "го"],
+    correct: 1,
+  },
+  // ── Definite articles ──
+  {
+    id: "g13",
+    prompt: "Книга___ е на масата.",
+    options: ["а", "ят", "та", "то"],
+    correct: 2,
+  },
+  {
+    id: "g14",
+    prompt: "Стол___ е счупен.",
+    options: ["а", "ът", "та", "то"],
+    correct: 1,
+  },
+  {
+    id: "g15",
+    prompt: "Дете___ спи в стаята.",
+    options: ["а", "ът", "та", "то"],
+    correct: 3,
+  },
+  {
+    id: "g16",
+    prompt: "— Ще купите ли този часовник? — Да, ще купя ___.",
+    options: ["часовниката", "часовника", "часовникът", "часовниците"],
+    correct: 1,
+  },
+  {
+    id: "g17",
+    prompt: "— Кой сандвич искате? — ___.",
+    options: ["Топлия", "Топълия", "Топлиа", "Топлият"],
+    correct: 3,
+  },
+  {
+    id: "g18",
+    prompt: "Аптека___ е на ъгъла.",
+    options: ["а", "ят", "та", "то"],
+    correct: 2,
+  },
+  {
+    id: "g19",
+    prompt: "Прозорец___ е отворен.",
+    options: ["а", "ът", "та", "то"],
+    correct: 1,
+  },
+  {
+    id: "g20",
+    prompt: "Момиче___ учи английски.",
+    options: ["а", "ят", "та", "то"],
+    correct: 3,
+  },
+  // ── Numerals and gender agreement ──
+  {
+    id: "g21",
+    prompt: "На покрива на училището ___ щъркела са свили гнездо.",
+    options: ["двама", "две", "два", "двете"],
+    correct: 2,
+  },
+  {
+    id: "g22",
+    prompt: "Кажи ми ___ са приятелите ти.",
+    options: ["кой", "коя", "кое", "кои"],
+    correct: 3,
+  },
+  {
+    id: "g23",
+    prompt: "— Колко души има в кабинета? — ___.",
+    options: ["Двамата", "Две", "Два", "Двама"],
+    correct: 3,
+  },
+  {
+    id: "g24",
+    prompt: "Купих ___ ябълки от пазара.",
+    options: ["пет", "пета", "петима", "петото"],
+    correct: 0,
+  },
+  // ── Aorist (simple past) ──
+  {
+    id: "g25",
+    prompt: "Вчера аз ___ хляб от магазина.",
+    options: ["купувам", "купих", "ще купя", "купи"],
+    correct: 1,
+  },
+  {
+    id: "g26",
+    prompt: "Миналата година ние ___ в Пловдив.",
+    options: ["живеем", "живяхме", "ще живеем", "живеят"],
+    correct: 1,
+  },
+  {
+    id: "g27",
+    prompt: "— Защо снощи не дойде? — Много ___ ми се.",
+    options: ["спеше", "спи", "ще спи", "спях"],
+    correct: 0,
+  },
+  {
+    id: "g28",
+    prompt: "— Огняне, ходи ли на концерт вчера? — Не, ___ билети.",
+    options: ["нямаше", "няма", "нямах", "няма да има"],
+    correct: 0,
+  },
+  {
+    id: "g29",
+    prompt: "Тя каза ли нещо? — Не, само ___.",
+    options: ["смееше", "се засмя", "засмя се", "засмееше се"],
+    correct: 2,
+  },
+  {
+    id: "g30",
+    prompt: "Снощи ние ___ много хубав филм.",
+    options: ["гледахме", "гледаме", "ще гледаме", "гледаха"],
+    correct: 0,
+  },
+  {
+    id: "g31",
+    prompt: "Вчера те ___ на гости при нас.",
+    options: ["дойдем", "дошли", "дойдоха", "идват"],
+    correct: 2,
+  },
+  {
+    id: "g32",
+    prompt: "Той ___ кафе и ___ за работа.",
+    options: ["пи / замина", "пие / заминава", "пил / е заминал", "пиеше / замина"],
+    correct: 0,
+  },
+  // ── Future tense ──
+  {
+    id: "g33",
+    prompt: "Утре ние ___ на лекар.",
+    options: ["отидохме", "ще отидем", "отиваме", "отидете"],
+    correct: 1,
+  },
+  {
+    id: "g34",
+    prompt: "Трябва ___ попълня формуляра преди края на деня.",
+    options: ["да", "че", "и", "за"],
+    correct: 0,
+  },
+  {
+    id: "g35",
+    prompt: "Ако дойдеш утре, ___ чакам.",
+    options: ["щях да те", "ще те", "бих те", "да те"],
+    correct: 1,
+  },
+  {
+    id: "g36",
+    prompt: "Тя ___ на работа утре.",
+    options: ["отидох", "ще отиде", "отиде", "отиват"],
+    correct: 1,
+  },
+  {
+    id: "g37",
+    prompt: "— Деца, ще бъдете ли свободни в неделя? — Не, ___ да бъдем.",
+    options: ["не ще", "няма", "няма да", "нямаме"],
+    correct: 2,
+  },
+  // ── Imperfect ──
+  {
+    id: "g38",
+    prompt: "Когато бях малък, ___ всяко лято в морето.",
+    options: ["плувах", "плувам", "ще плувам", "плувахме"],
+    correct: 0,
+  },
+  {
+    id: "g39",
+    prompt: "Тя ___ книга, когато телефонът иззвъня.",
+    options: ["чете", "четеше", "ще чете", "прочете"],
+    correct: 1,
+  },
+  // ── Perfect and complex ──
+  {
+    id: "g40",
+    prompt: "Вече цяла седмица съм в София, а още ___ на Витоша.",
+    options: ["ходила съм е", "не ходих", "няма да съм ходил", "не съм ходила"],
+    correct: 3,
+  },
+  {
+    id: "g41",
+    prompt: "— Госпожице, вчера бяхте ли на театър? — Да, ___.",
+    options: ["бяхме", "беше", "бяха", "бях"],
+    correct: 3,
+  },
+  // ── Passive ──
+  {
+    id: "g42",
+    prompt: "Пушенето в сградата ___.",
+    options: ["не разрешено", "разрешено е", "не е разрешено", "е не разрешено"],
+    correct: 2,
+  },
+  {
+    id: "g43",
+    prompt: "Град Велико Търново ___ от много чужденци.",
+    options: ["посещават", "посетен", "посещаван", "се посещава"],
+    correct: 3,
+  },
+  {
+    id: "g44",
+    prompt: "Писмото ___ от директора вчера.",
+    options: ["е подписано", "подписваше", "подписа", "е подписва"],
+    correct: 0,
+  },
+  // ── Reflexives ──
+  {
+    id: "g45",
+    prompt: "Събуждам ___ в шест часа всяка сутрин.",
+    options: ["ми", "се", "си", "го"],
+    correct: 1,
+  },
+  {
+    id: "g46",
+    prompt: "Лягам ___ в единадесет вечерта.",
+    options: ["се", "ми", "си", "те"],
+    correct: 2,
+  },
+  // ── Comparatives ──
+  {
+    id: "g47",
+    prompt: "Тази ябълка е ___ от онази.",
+    options: ["по-сладка", "най-сладка", "сладка", "по-сладко"],
+    correct: 0,
+  },
+  {
+    id: "g48",
+    prompt: "Той е ___ студент в класа.",
+    options: ["по-добрият", "по-добър", "най-добрият", "добрият"],
+    correct: 2,
+  },
+  // ── боли ме / болят ме ──
+  {
+    id: "g49",
+    prompt: "___ ме главата от вчера.",
+    options: ["Болят", "Боли", "Боля", "Болея"],
+    correct: 1,
+  },
+  {
+    id: "g50",
+    prompt: "___ ме зъбите — трябва ми зъболекар.",
+    options: ["Боли", "Болят", "Боля", "Болях"],
+    correct: 1,
+  },
+  // ── да-construction / modals ──
+  {
+    id: "g51",
+    prompt: "Искам ___ отида на кино тази вечер.",
+    options: ["да", "че", "ли", "за"],
+    correct: 0,
+  },
+  {
+    id: "g52",
+    prompt: "Мога ___ говоря малко български.",
+    options: ["за", "ли", "да", "се"],
+    correct: 2,
+  },
+  // ── Profession with като ──
+  {
+    id: "g53",
+    prompt: "Работя ___ лекар в болницата.",
+    options: ["за", "като", "в", "на"],
+    correct: 1,
+  },
+  {
+    id: "g54",
+    prompt: "Тя е наета ___ преводач.",
+    options: ["за", "като", "при", "от"],
+    correct: 1,
+  },
+  // ── Честит agreement ──
+  {
+    id: "g55",
+    prompt: "___ рожден ден!",
+    options: ["Честито", "Честита", "Честит", "Чести"],
+    correct: 2,
+  },
+  {
+    id: "g56",
+    prompt: "___ Нова година!",
+    options: ["Честит", "Честита", "Честито", "Чести"],
+    correct: 2,
+  },
+  {
+    id: "g57",
+    prompt: "___ сватба!",
+    options: ["Честит", "Честита", "Честито", "Чести"],
+    correct: 1,
+  },
+  // ── Seasons + през ──
+  {
+    id: "g58",
+    prompt: "___ лятото обичам да плувам в морето.",
+    options: ["В", "На", "По", "През"],
+    correct: 3,
+  },
+  {
+    id: "g59",
+    prompt: "___ зимата вали много сняг в Банско.",
+    options: ["В", "На", "По", "През"],
+    correct: 3,
+  },
+  // ── Negation / double negative ──
+  {
+    id: "g60",
+    prompt: "Никой ___ знае отговора.",
+    options: ["е", "не", "ли", "да"],
+    correct: 1,
+  },
+  {
+    id: "g61",
+    prompt: "Нямам ___ пари за такси.",
+    options: ["никакви", "никакво", "никого", "нищо"],
+    correct: 0,
+  },
+  // ── Pronouns — possessive ──
+  {
+    id: "g62",
+    prompt: "Това е книгата на Мария. Това е ___ книга.",
+    options: ["нейна", "нейната", "неговата", "нейно"],
+    correct: 0,
+  },
+  {
+    id: "g63",
+    prompt: "— Чия е тази чанта? — ___ е.",
+    options: ["Мойта", "Моя", "Аз", "Моята"],
+    correct: 1,
+  },
 ];
 
 function buildGrammar(count: number): CefrQuestion[] {
-  return shuffle(GRAMMAR).slice(0, count).map((q) => ({ ...q, section: "grammar" as const }));
+  return shuffle(GRAMMAR_POOL)
+    .slice(0, count)
+    .map((q) => ({ ...q, section: "grammar" as const }));
 }
 
-// ---------- Section 3: Reading (survival-only passages) ----------
-interface RPassage { bg: string; en: string; questions: { q: string; options: string[]; correct: number }[]; }
+// ─── Section 3: Reading ──────────────────────────────────────────────────────
+// 5 passages, all prompts and answers in Bulgarian.
+// Questions drawn from shuffled passages until count is reached.
+interface RPassage {
+  bg: string;
+  questions: { q: string; options: string[]; correct: number }[];
+}
+
 const READING_PASSAGES: RPassage[] = [
-  // Passage 1 — Renting an apartment
+  // Passage 1 — Наем на апартамент
   {
-    bg: "— Добър ден. Исках да попитам за наема.\n— Апартаментът е двустаен, на трети етаж, с обзавеждане. Наемът е шестстотин лева на месец, без тока и водата.\n— Има ли паркинг?\n— За съжаление няма. Но наблизо има паркинг срещу десет лева на ден.\n— Кога мога да го видя?\n— Утре следобед, ако ви е удобно.",
-    en: "— Good day. I wanted to ask about the rent.\n— The apartment is two rooms, third floor, furnished. Rent is 600 lev per month, without electricity and water.\n— Is there parking?\n— Unfortunately not. But there is nearby parking for 10 lev per day.\n— When can I see it?\n— Tomorrow afternoon if that suits you.",
+    bg:
+      "— Добър ден. Исках да попитам за наема.\n" +
+      "— Апартаментът е двустаен, на трети етаж, с обзавеждане. Наемът е шестстотин лева на месец, без тока и водата.\n" +
+      "— Има ли паркинг?\n" +
+      "— За съжаление няма. Но наблизо има паркинг срещу десет лева на ден.\n" +
+      "— Кога мога да го видя?\n" +
+      "— Утре следобед, ако ви е удобно.",
     questions: [
-      { q: "How much is the monthly rent?",        options: ["500 lev", "600 lev", "700 lev", "610 lev"],                      correct: 1 },
-      { q: "What is NOT included in the rent?",    options: ["Furniture", "Electricity and water", "The apartment", "The floor"], correct: 1 },
-      { q: "Is there parking available?",          options: ["Yes, free", "Yes, 10 lev/day nearby", "No parking at all", "Yes, included"], correct: 1 },
+      {
+        q: "Колко е месечният наем?",
+        options: ["500 лева", "600 лева", "700 лева", "610 лева"],
+        correct: 1,
+      },
+      {
+        q: "Какво НЕ е включено в наема?",
+        options: ["Обзавеждането", "Токът и водата", "Апартаментът", "Етажът"],
+        correct: 1,
+      },
+      {
+        q: "Има ли паркинг към апартамента?",
+        options: [
+          "Да, безплатен",
+          "Да, наблизо за 10 лева на ден",
+          "Изобщо няма паркинг",
+          "Да, включен в наема",
+        ],
+        correct: 1,
+      },
     ],
   },
-  // Passage 2 — Doctor visit
+  // Passage 2 — При лекар
   {
-    bg: "— Добър ден. Имам час при доктор Иванова.\n— Как се казвате?\n— Казвам се Адам Смит.\n— Заповядайте, седнете. Какво ви тревожи?\n— От три дни ме боли гърлото и имам температура.\n— Отворете устата. Сливиците са зачервени. Ще ви предпиша антибиотик. Вземайте три пъти дневно след хранене.",
-    en: "— Good day. I have an appointment with Dr. Ivanova.\n— What is your name?\n— My name is Adam Smith.\n— Please come in, sit down. What is bothering you?\n— For three days my throat has been hurting and I have a fever.\n— Open your mouth. The tonsils are red. I will prescribe an antibiotic. Take it three times daily after meals.",
+    bg:
+      "— Добър ден. Имам час при доктор Иванова.\n" +
+      "— Как се казвате?\n" +
+      "— Казвам се Адам Смит.\n" +
+      "— Заповядайте, седнете. Какво ви тревожи?\n" +
+      "— От три дни ме боли гърлото и имам температура.\n" +
+      "— Отворете устата. Сливиците са зачервени. Ще ви предпиша антибиотик. Вземайте три пъти дневно след хранене.",
     questions: [
-      { q: "How long has the patient had symptoms?", options: ["One day", "Two days", "Three days", "A week"],               correct: 2 },
-      { q: "What does the doctor prescribe?",        options: ["Painkiller", "Antibiotic", "Nasal spray", "Cough syrup"],    correct: 1 },
-      { q: "When should the medicine be taken?",     options: ["Once daily", "Twice daily on empty stomach", "Three times daily after meals", "Before sleep only"], correct: 2 },
+      {
+        q: "От колко дни пациентът има оплаквания?",
+        options: ["Един ден", "Два дни", "Три дни", "Една седмица"],
+        correct: 2,
+      },
+      {
+        q: "Какво предписва лекарят?",
+        options: ["Болкоуспокояващо", "Антибиотик", "Спрей за нос", "Сироп за кашлица"],
+        correct: 1,
+      },
+      {
+        q: "Кога трябва да се взима лекарството?",
+        options: [
+          "Веднъж дневно",
+          "Два пъти дневно на гладно",
+          "Три пъти дневно след хранене",
+          "Само преди сън",
+        ],
+        correct: 2,
+      },
     ],
   },
-  // Passage 3 — Immigration office
+  // Passage 3 — Дирекция за миграция
   {
-    bg: "— Добър ден. Искам да подам документи за разрешение за пребиваване.\n— Имате ли всички документи?\n— Да. Имам паспорт, договор за наем и здравна осигуровка.\n— Трябва ви и заверен превод на договора. Имате ли?\n— Не, не знаех това.\n— Направете го при нотариус. После елате пак на гише номер три.\n— Колко дни отнема разрешението?\n— Около тридесет работни дни.",
-    en: "— Good day. I want to submit documents for a residence permit.\n— Do you have all the documents?\n— Yes. I have a passport, rental contract and health insurance.\n— You also need a certified translation of the contract. Do you have it?\n— No, I did not know that.\n— Get it done at a notary. Then come back to counter number three.\n— How many days does the permit take?\n— About thirty working days.",
+    bg:
+      "— Добър ден. Искам да подам документи за разрешение за пребиваване.\n" +
+      "— Имате ли всички документи?\n" +
+      "— Да. Имам паспорт, договор за наем и здравна осигуровка.\n" +
+      "— Трябва ви и заверен превод на договора. Имате ли?\n" +
+      "— Не, не знаех това.\n" +
+      "— Направете го при нотариус. После елате пак на гише номер три.\n" +
+      "— Колко дни отнема разрешението?\n" +
+      "— Около тридесет работни дни.",
     questions: [
-      { q: "What is the person applying for?",            options: ["Passport", "Residence permit", "Work permit", "Health insurance"],       correct: 1 },
-      { q: "What document is the person missing?",        options: ["Passport", "Health insurance", "Certified translation", "Bank statement"], correct: 2 },
-      { q: "Where should they get the missing document?", options: ["The embassy", "The hospital", "Counter three", "A notary"],               correct: 3 },
-      { q: "How long does the residence permit take?",    options: ["10 working days", "30 working days", "30 calendar days", "60 days"],      correct: 1 },
+      {
+        q: "За какво подава документи лицето?",
+        options: [
+          "За паспорт",
+          "За разрешение за пребиваване",
+          "За работно разрешение",
+          "За здравна осигуровка",
+        ],
+        correct: 1,
+      },
+      {
+        q: "Какъв документ липсва?",
+        options: [
+          "Паспортът",
+          "Здравната осигуровка",
+          "Завереният превод",
+          "Банковото извлечение",
+        ],
+        correct: 2,
+      },
+      {
+        q: "Къде трябва да направи липсващия документ?",
+        options: [
+          "В посолството",
+          "В болницата",
+          "На гише три",
+          "При нотариус",
+        ],
+        correct: 3,
+      },
+      {
+        q: "Колко работни дни отнема разрешението?",
+        options: [
+          "10 работни дни",
+          "30 работни дни",
+          "30 календарни дни",
+          "60 дни",
+        ],
+        correct: 1,
+      },
     ],
   },
-  // Passage 4 — Paying a bill / utility office
+  // Passage 4 — Плащане на сметка
   {
-    bg: "— Добър ден. Искам да платя сметката за тока.\n— Имате ли клиентския си номер?\n— Да, ето го. Колко е сумата?\n— Осемдесет и шест лева. Можете да платите в брой или с карта.\n— Ще платя с карта, моля. Може ли касова бележка?\n— Разбира се. Заповядайте.",
-    en: "— Good day. I want to pay the electricity bill.\n— Do you have your customer number?\n— Yes, here it is. How much is the amount?\n— 86 levs. You can pay in cash or by card.\n— I will pay by card, please. May I have a receipt?\n— Of course. Here you go.",
+    bg:
+      "— Добър ден. Искам да платя сметката за тока.\n" +
+      "— Имате ли клиентския си номер?\n" +
+      "— Да, ето го. Колко е сумата?\n" +
+      "— Осемдесет и шест лева. Можете да платите в брой или с карта.\n" +
+      "— Ще платя с карта, моля. Може ли касова бележка?\n" +
+      "— Разбира се. Заповядайте.",
     questions: [
-      { q: "What is the customer paying?",   options: ["Rent", "Electricity bill", "Water bill", "Internet bill"], correct: 1 },
-      { q: "How much is the bill?",          options: ["68 lev", "86 lev", "16 lev", "186 lev"],                  correct: 1 },
-      { q: "How does the customer pay?",     options: ["Cash", "Card", "Bank transfer", "Cheque"],                correct: 1 },
+      {
+        q: "Какво плаща клиентът?",
+        options: ["Наем", "Сметка за ток", "Сметка за вода", "Сметка за интернет"],
+        correct: 1,
+      },
+      {
+        q: "Колко е сумата?",
+        options: ["68 лева", "86 лева", "16 лева", "186 лева"],
+        correct: 1,
+      },
+      {
+        q: "Как плаща клиентът?",
+        options: ["В брой", "С карта", "По банков път", "С чек"],
+        correct: 1,
+      },
+    ],
+  },
+  // Passage 5 — Хотелска рецепция
+  {
+    bg:
+      "— Добър вечер. Имам резервация на името на Петров.\n" +
+      "— Добре дошли, господин Петров. Двойна стая с включена закуска за три нощи, нали?\n" +
+      "— Да, точно така. Закуската от колко до колко часа е?\n" +
+      "— От седем до десет часа в ресторанта на партера.\n" +
+      "— Климатикът в стаята работи ли?\n" +
+      "— Да, разбира се. Стаята е на четвърти етаж, стая 412. Ето ключа ви.\n" +
+      "— Благодаря. Има ли паркинг?\n" +
+      "— Да, безплатен паркинг за гостите.",
+    questions: [
+      {
+        q: "За колко нощи е резервацията?",
+        options: ["Две нощи", "Три нощи", "Четири нощи", "Пет нощи"],
+        correct: 1,
+      },
+      {
+        q: "До колко часа е закуската?",
+        options: ["До девет", "До десет", "До единадесет", "До дванадесет"],
+        correct: 1,
+      },
+      {
+        q: "На кой етаж е стаята?",
+        options: ["Трети", "Четвърти", "Пети", "Втори"],
+        correct: 1,
+      },
+      {
+        q: "Какъв е паркингът?",
+        options: [
+          "Платен, 10 лева на ден",
+          "Безплатен за гостите",
+          "Само за VIP гости",
+          "Няма паркинг",
+        ],
+        correct: 1,
+      },
     ],
   },
 ];
 
 function buildReading(count: number): CefrQuestion[] {
-  // Shuffle the passages each test so questions come from different ones
   const shuffledPassages = shuffle(READING_PASSAGES);
   const out: CefrQuestion[] = [];
   let i = 0;
   for (const p of shuffledPassages) {
-    for (const q of p.questions) {
+    // Shuffle questions within each passage too
+    for (const q of shuffle(p.questions)) {
       if (out.length >= count) break;
       out.push({
         id: `read-${i++}`,
         section: "reading",
         prompt: q.q,
-        passage: { bg: p.bg, en: p.en },
+        passage: { bg: p.bg },
         options: q.options,
         correct: q.correct,
       });
@@ -205,27 +955,283 @@ function buildReading(count: number): CefrQuestion[] {
   return out;
 }
 
-// ---------- Section 5: Writing / Active production ----------
-const WRITING: Omit<CefrQuestion, "section">[] = [
-  { id: "w1",  prompt: "You want to ask how much something costs at the market.",                        options: ["Колко е часът?","Колко струва това?","Къде е касата?","Какво е това?"],                                correct: 1 },
-  { id: "w2",  prompt: "You greet your landlord politely in the morning.",                               options: ["Здрасти, как е?","Чао, до утре!","Добро утро, господине.","Хайде, лека нощ!"],                          correct: 2 },
-  { id: "w3",  prompt: "You want to tell the doctor you have a sore throat.",                            options: ["Боли ме гърлото.","Гладен съм.","Имам нужда от пари.","Студено ми е."],                                correct: 0 },
-  { id: "w4",  prompt: "At the immigration office, you ask which counter to go to.",                     options: ["Колко е таксата?","На кое гише да отида?","Имате ли касова бележка?","Кога затваряте?"],                correct: 1 },
-  { id: "w5",  prompt: "You want to ask the pharmacist if they have a specific medicine.",               options: ["Колко струва аспиринът?","Имате ли това лекарство?","Къде е аптеката?","Аз съм болен."],                correct: 1 },
-  { id: "w6",  prompt: "You ask for a receipt at the shop.",                                             options: ["Може ли торбичка?","Може ли касова бележка?","Колко струва?","Имате ли отстъпка?"],                     correct: 1 },
-  { id: "w7",  prompt: "Tell the landlord you'd like to sign the rental contract today.",               options: ["Искам да платя депозита утре.","Искам да подпиша договора днес.","Искам да напусна апартамента.","Искам нов апартамент."], correct: 1 },
-  { id: "w8",  prompt: "Apologize politely for being late.",                                             options: ["Извинете за закъснението.","Здравейте, как сте?","Благодаря много!","Довиждане!"],                       correct: 0 },
-  { id: "w9",  prompt: "Ask the university clerk how long the certificate (уверение) takes to be ready.", options: ["Колко струва уверението?","Кога е готово уверението?","Какво е уверение?","Защо ми трябва уверение?"], correct: 1 },
-  { id: "w10", prompt: "You're at the market and want half a kilo of tomatoes.",                        options: ["Един килограм краставици.","Половин килограм домати.","Една бутилка вода.","Дайте ми сирене."],          correct: 1 },
-  { id: "w11", prompt: "You want to tell the officer you do not speak Bulgarian.",                       options: ["Не говоря български.","Говоря малко.","Разбирам всичко.","Имам преводач."],                             correct: 0 },
-  { id: "w12", prompt: "You ask the landlord when the heating comes on.",                               options: ["Кой плаща тока?","Кога се включва парното?","Имате ли интернет?","Кога е депозитът?"],                  correct: 1 },
+// ─── Section 5: Writing / Active production ──────────────────────────────────
+// 24-question pool — all prompts in Bulgarian; all options in Bulgarian.
+// 10 drawn per test.
+const WRITING_POOL: Omit<CefrQuestion, "section">[] = [
+  {
+    id: "w01",
+    prompt: "Искате да попитате за цената на пазара.",
+    options: [
+      "Колко е часът?",
+      "Колко струва това?",
+      "Къде е касата?",
+      "Какво е това?",
+    ],
+    correct: 1,
+  },
+  {
+    id: "w02",
+    prompt: "Поздравявате наемодателя учтиво сутринта.",
+    options: [
+      "Здрасти, как е?",
+      "Чао, до утре!",
+      "Добро утро, господине.",
+      "Хайде, лека нощ!",
+    ],
+    correct: 2,
+  },
+  {
+    id: "w03",
+    prompt: "Искате да кажете на лекаря, че ви боли гърлото.",
+    options: [
+      "Боли ме гърлото.",
+      "Гладен съм.",
+      "Имам нужда от пари.",
+      "Студено ми е.",
+    ],
+    correct: 0,
+  },
+  {
+    id: "w04",
+    prompt: "В дирекцията питате на кое гише да отидете.",
+    options: [
+      "Колко е таксата?",
+      "На кое гише да отида?",
+      "Имате ли касова бележка?",
+      "Кога затваряте?",
+    ],
+    correct: 1,
+  },
+  {
+    id: "w05",
+    prompt: "Питате в аптеката дали имат конкретно лекарство.",
+    options: [
+      "Колко струва аспиринът?",
+      "Имате ли това лекарство?",
+      "Къде е аптеката?",
+      "Аз съм болен.",
+    ],
+    correct: 1,
+  },
+  {
+    id: "w06",
+    prompt: "Искате касова бележка от магазина.",
+    options: [
+      "Може ли торбичка?",
+      "Може ли касова бележка?",
+      "Колко струва?",
+      "Имате ли отстъпка?",
+    ],
+    correct: 1,
+  },
+  {
+    id: "w07",
+    prompt: "Казвате на наемодателя, че искате да подпишете договора днес.",
+    options: [
+      "Искам да платя депозита утре.",
+      "Искам да подпиша договора днес.",
+      "Искам да напусна апартамента.",
+      "Искам нов апартамент.",
+    ],
+    correct: 1,
+  },
+  {
+    id: "w08",
+    prompt: "Извинявате се учтиво за закъснението.",
+    options: [
+      "Извинете за закъснението.",
+      "Здравейте, как сте?",
+      "Благодаря много!",
+      "Довиждане!",
+    ],
+    correct: 0,
+  },
+  {
+    id: "w09",
+    prompt: "Питате служителя в университета кога е готово уверението.",
+    options: [
+      "Колко струва уверението?",
+      "Кога е готово уверението?",
+      "Какво е уверение?",
+      "Защо ми трябва уверение?",
+    ],
+    correct: 1,
+  },
+  {
+    id: "w10",
+    prompt: "На пазара искате половин килограм домати.",
+    options: [
+      "Един килограм краставици.",
+      "Половин килограм домати.",
+      "Една бутилка вода.",
+      "Дайте ми сирене.",
+    ],
+    correct: 1,
+  },
+  {
+    id: "w11",
+    prompt: "Казвате на служителя, че не говорите български.",
+    options: [
+      "Не говоря български.",
+      "Говоря малко.",
+      "Разбирам всичко.",
+      "Имам преводач.",
+    ],
+    correct: 0,
+  },
+  {
+    id: "w12",
+    prompt: "Питате наемодателя кога се включва парното.",
+    options: [
+      "Кой плаща тока?",
+      "Кога се включва парното?",
+      "Имате ли интернет?",
+      "Кога е депозитът?",
+    ],
+    correct: 1,
+  },
+  {
+    id: "w13",
+    prompt: "В ресторанта искате сметката.",
+    options: [
+      "Менюто, моля.",
+      "Сметката, моля.",
+      "Рестото, моля.",
+      "Гарнитурата, моля.",
+    ],
+    correct: 1,
+  },
+  {
+    id: "w14",
+    prompt: "Питате дали може да платите с карта.",
+    options: [
+      "Имате ли банкомат?",
+      "Може ли да платя с карта?",
+      "Приемате ли евро?",
+      "Нямам пари в брой.",
+    ],
+    correct: 1,
+  },
+  {
+    id: "w15",
+    prompt: "Искате да поръчате маса в ресторант за двама.",
+    options: [
+      "Имате ли свободно място?",
+      "Искам маса за двама, моля.",
+      "Колко е менюто?",
+      "Имате ли вегетарианско меню?",
+    ],
+    correct: 1,
+  },
+  {
+    id: "w16",
+    prompt: "Питате колко спирки до центъра.",
+    options: [
+      "Колко струва билетът?",
+      "Колко спирки до центъра?",
+      "Кога тръгва автобусът?",
+      "Кой е крайният спирка?",
+    ],
+    correct: 1,
+  },
+  {
+    id: "w17",
+    prompt: "Казвате, че багажът ви е изгубен на летището.",
+    options: [
+      "Полетът ми е закъснял.",
+      "Куфарът ми е тежък.",
+      "Багажът ми е изгубен.",
+      "Нямам ръчен багаж.",
+    ],
+    correct: 2,
+  },
+  {
+    id: "w18",
+    prompt: "Питате на кой перон е влакът за Пловдив.",
+    options: [
+      "В колко часа тръгва влакът?",
+      "На кой перон е влакът за Пловдив?",
+      "Има ли директен влак?",
+      "Колко струва билетът?",
+    ],
+    correct: 1,
+  },
+  {
+    id: "w19",
+    prompt: "Искате да кажете, че имате алергия към пеницилин.",
+    options: [
+      "Боли ме стомахът.",
+      "Имам алергия към пеницилин.",
+      "Не харесвам това лекарство.",
+      "Имам рецепта от лекаря.",
+    ],
+    correct: 1,
+  },
+  {
+    id: "w20",
+    prompt: "Благодарите учтиво на служителя.",
+    options: [
+      "Довиждане!",
+      "Благодаря много, имайте хубав ден!",
+      "Чао!",
+      "Ок, разбрах.",
+    ],
+    correct: 1,
+  },
+  {
+    id: "w21",
+    prompt: "Питате дали в апартамента има интернет.",
+    options: [
+      "Включено ли е парното?",
+      "Имате ли интернет в апартамента?",
+      "Колко е наемът?",
+      "Кога е свободен апартаментът?",
+    ],
+    correct: 1,
+  },
+  {
+    id: "w22",
+    prompt: "Казвате, че нямате разбрали нещо и молите за повторение.",
+    options: [
+      "Не съм съгласен.",
+      "Говорете по-бавно, моля.",
+      "Не ме интересува.",
+      "Разбрах всичко.",
+    ],
+    correct: 1,
+  },
+  {
+    id: "w23",
+    prompt: "Питате как се стига до Народния театър.",
+    options: [
+      "Къде е спирката?",
+      "Как се стига до Народния театър?",
+      "Колко струва таксито?",
+      "Има ли метро наблизо?",
+    ],
+    correct: 1,
+  },
+  {
+    id: "w24",
+    prompt: "Поздравявате колега за рожден ден.",
+    options: [
+      "Честито!",
+      "Честит рожден ден!",
+      "Наздраве!",
+      "Приятно ми е.",
+    ],
+    correct: 1,
+  },
 ];
 
 function buildWriting(count: number): CefrQuestion[] {
-  return shuffle(WRITING).slice(0, count).map((q) => ({ ...q, section: "writing" as const }));
+  return shuffle(WRITING_POOL)
+    .slice(0, count)
+    .map((q) => ({ ...q, section: "writing" as const }));
 }
 
-// ---------- Build full test ----------
+// ─── Build full test ──────────────────────────────────────────────────────────
 export function buildCefrTest(): CefrQuestion[] {
   return [
     ...buildVocab(15),
@@ -236,7 +1242,7 @@ export function buildCefrTest(): CefrQuestion[] {
   ];
 }
 
-// ---------- Scoring ----------
+// ─── Scoring ─────────────────────────────────────────────────────────────────
 export interface CefrResult {
   total: number;
   correct: number;
@@ -254,36 +1260,49 @@ export function levelFromPct(pct: number): CefrLevel {
   return "A1";
 }
 
-const LEVEL_SUMMARY: Record<CefrLevel, { can: string; cant: string; focus: string }> = {
+const LEVEL_SUMMARY: Record<
+  CefrLevel,
+  { can: string; cant: string; focus: string }
+> = {
   A1: {
-    can: "You can recognize a small core of everyday Bulgarian words and a few simple phrases.",
-    cant: "You can't yet hold a real conversation, read full texts, or use past/future tenses confidently.",
-    focus: "Daily-life vocabulary, present tense conjugations, numbers, and the most common greetings and shop phrases.",
+    can: "Разпознавате малко ежедневни думи и прости изрази на български.",
+    cant: "Все още не можете да водите реален разговор, да четете пълни текстове или да използвате минало и бъдеще уверено.",
+    focus:
+      "Ежедневна лексика, сегашно вpеме, числа, поздрави и прости фрази в магазина.",
   },
   A2: {
-    can: "You handle basic everyday situations: greetings, shopping, simple questions, present-tense verbs.",
-    cant: "Complex sentences, longer reading passages, and grammar nuance (definite articles, past/future) are still hard.",
-    focus: "Past tense (минало свършено), definite article forms (-ът, -та, -то), and survival scenarios (immigration, doctor, market).",
+    can: "Справяте се с основни ситуации: поздрави, пазаруване, прости въпроси, глаголи в сегашно вpеме.",
+    cant: "Сложни изречения, по-дълги текстове и граматически нюанси (членуване, минало/бъдеще) все още са трудни.",
+    focus:
+      "Минало свършено, форми на определителния член (-ът, -та, -то) и сценарии от реалния живот (миграция, лекар, пазар).",
   },
   B1: {
-    can: "You manage real-life interactions in Bulgaria: rent an apartment, see a doctor, deal with admin offices, and read short texts.",
-    cant: "Subtle grammar, idiomatic expressions, and faster native speech still cause issues.",
-    focus: "Reading longer texts, listening to natural-speed dialogues, and active writing/speaking practice on professional topics.",
+    can: "Справяте се с реални ситуации в България: наем на апартамент, лекар, административни служби и кратки текстове.",
+    cant: "Тънкости в граматиката, идиоми и по-бърза реч на носители все още ви затрудняват.",
+    focus:
+      "Четене на по-дълги текстове, слушане на естествена реч и активна практика на писане/говорене по професионални теми.",
   },
   B2: {
-    can: "You communicate fluently in most everyday and professional contexts. You understand main ideas in complex texts.",
-    cant: "Native-level idioms, regional accents, and very specialized vocabulary may still trip you up.",
-    focus: "Idiomatic expressions, advanced reading (news, articles), and sustained spoken practice with native speakers.",
+    can: "Общувате свободно в повечето ежедневни и професионални ситуации. Разбирате основните идеи в сложни текстове.",
+    cant: "Идиоми на носители, регионални акценти и много специализирана лексика може все още да ви затрудняват.",
+    focus:
+      "Идиоматични изрази, напреднало четене (новини, статии) и продължителна разговорна практика с носители на езика.",
   },
 };
 
-export function scoreCefrTest(questions: CefrQuestion[], answers: (number | null)[]): CefrResult {
-  const perSection: Record<SectionId, { correct: number; total: number; pct: number }> = {
-    vocab:     { correct: 0, total: 0, pct: 0 },
-    grammar:   { correct: 0, total: 0, pct: 0 },
-    reading:   { correct: 0, total: 0, pct: 0 },
+export function scoreCefrTest(
+  questions: CefrQuestion[],
+  answers: (number | null)[]
+): CefrResult {
+  const perSection: Record<
+    SectionId,
+    { correct: number; total: number; pct: number }
+  > = {
+    vocab: { correct: 0, total: 0, pct: 0 },
+    grammar: { correct: 0, total: 0, pct: 0 },
+    reading: { correct: 0, total: 0, pct: 0 },
     listening: { correct: 0, total: 0, pct: 0 },
-    writing:   { correct: 0, total: 0, pct: 0 },
+    writing: { correct: 0, total: 0, pct: 0 },
   };
   let correct = 0;
   questions.forEach((q, i) => {
@@ -306,7 +1325,7 @@ export function scoreCefrTest(questions: CefrQuestion[], answers: (number | null
     pct,
     level,
     perSection,
-    summary: `You can: ${meta.can} You can't yet: ${meta.cant}`,
+    summary: `Можете: ${meta.can} Все още не можете: ${meta.cant}`,
     recommendation: meta.focus,
   };
 }
