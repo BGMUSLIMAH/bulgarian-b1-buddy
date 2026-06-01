@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { buildCefrTest, scoreCefrTest, SECTIONS, type CefrQuestion, type SectionId, type CefrResult } from "@/lib/cefr";
 import { recordEvaluation, speak } from "@/lib/store";
 
@@ -20,6 +20,8 @@ function EvalPage() {
   const [answers, setAnswers] = useState<(number | null)[]>([]);
   const [i, setI] = useState(0);
   const [result, setResult] = useState<CefrResult | null>(null);
+  // Track section transitions so we can show a brief "Section complete" card
+  const [sectionTransition, setSectionTransition] = useState<string | null>(null);
 
   function start() {
     const qs = buildCefrTest();
@@ -28,6 +30,7 @@ function EvalPage() {
     setI(0);
     setStarted(true);
     setResult(null);
+    setSectionTransition(null);
   }
 
   function pick(idx: number) {
@@ -38,7 +41,10 @@ function EvalPage() {
   }
 
   function goNext() {
-    if (i + 1 >= questions.length) {
+    const currentSection = questions[i].section;
+    const nextIndex = i + 1;
+
+    if (nextIndex >= questions.length) {
       const r = scoreCefrTest(questions, answers);
       setResult(r);
       try {
@@ -46,12 +52,25 @@ function EvalPage() {
         localStorage.setItem("btb1_cefr_result_v1", JSON.stringify({ ...r, takenAt: new Date().toISOString() }));
       } catch { /* ignore */ }
     } else {
-      setI(i + 1);
+      const nextSection = questions[nextIndex].section;
+      if (nextSection !== currentSection) {
+        // Show a section-complete transition card before moving on
+        const completedMeta = SECTIONS.find((s) => s.id === currentSection)!;
+        setSectionTransition(completedMeta.label);
+        // Advance after a short delay so the user sees the transition
+        setTimeout(() => {
+          setSectionTransition(null);
+          setI(nextIndex);
+        }, 1800);
+      } else {
+        setI(nextIndex);
+      }
     }
   }
 
   if (!started && !result) return <Intro onStart={start} />;
   if (result) return <Results r={result} onRestart={start} />;
+  if (sectionTransition) return <SectionComplete label={sectionTransition} />;
   return (
     <Runner
       q={questions[i]}
@@ -64,6 +83,22 @@ function EvalPage() {
   );
 }
 
+// ── Section transition splash ──────────────────────────────────────────────────
+function SectionComplete({ label }: { label: string }) {
+  return (
+    <div className="flex min-h-[40vh] flex-col items-center justify-center gap-4 text-center">
+      <div className="rounded-2xl border border-border bg-card px-10 py-8 shadow-lg">
+        <p className="text-4xl">✅</p>
+        <h2 className="mt-3 font-display text-2xl font-bold text-foreground">
+          {label} complete
+        </h2>
+        <p className="mt-1 text-sm text-muted-foreground">Moving to the next section…</p>
+      </div>
+    </div>
+  );
+}
+
+// ── Intro ──────────────────────────────────────────────────────────────────────
 function Intro({ onStart }: { onStart: () => void }) {
   const total = SECTIONS.reduce((a, s) => a + s.count, 0);
   const previous = useMemo(() => {
@@ -110,6 +145,7 @@ function Intro({ onStart }: { onStart: () => void }) {
   );
 }
 
+// ── Question runner ────────────────────────────────────────────────────────────
 function Runner({
   q, i, total, answer, onPick, onNext,
 }: {
@@ -125,14 +161,38 @@ function Runner({
   const sectionIndex = i - sectionStart + 1;
   const overallPct = Math.round(((i + (answer !== null ? 1 : 0)) / total) * 100);
 
-  // Auto-play listening prompts on first render of the question.
+  // Track which question IDs have already had audio auto-played so we never
+  // fire speak() again on a re-render caused by answer-state changes.
+  const playedRef = useRef<Set<string>>(new Set());
   useEffect(() => {
-    if (q.audio) speak(q.audio);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q.id]);
+    if (q.audio && answer === null && !playedRef.current.has(q.id)) {
+      playedRef.current.add(q.id);
+      speak(q.audio);
+    }
+  }, [q.id, q.audio, answer]);
+
+  // Determine whether this reading question shares its passage with adjacent ones.
+  const passageLabel = useMemo(() => {
+    if (!q.passage) return null;
+    const passageId = q.passage.bg.slice(0, 40); // use first 40 chars as stable key
+    // Count how many questions in the section share this passage, and which occurrence this is.
+    // We rely on the fact that section questions are contiguous and grouped by passage.
+    return passageId;
+  }, [q.passage]);
+
+  // Compute "question N of M for this passage" label
+  const passageInfo = useMemo(() => {
+    if (!q.passage) return null;
+    const key = q.passage.bg.slice(0, 40);
+    // Find all indices sharing this passage key within the full section
+    // We don't have access to full question array here so we derive from section metadata.
+    // Leave as simple label; full context requires the questions array prop.
+    return key;
+  }, [q.passage]);
 
   return (
     <div className="space-y-4">
+      {/* Progress header */}
       <div className="space-y-2">
         <div className="flex items-center justify-between text-xs">
           <span className="font-medium text-primary">{sec.emoji} {sec.label}</span>
@@ -144,21 +204,29 @@ function Runner({
       </div>
 
       <div className="rounded-xl border border-border bg-card p-6 shadow-lg">
+        {/* Reading passage with scroll cap so it doesn't push buttons off-screen */}
         {q.passage && (
           <div className="mb-4 rounded-md border border-border bg-background/60 p-4 text-sm">
-            <p className="whitespace-pre-line text-foreground">{q.passage.bg}</p>
+            <div
+              className="overflow-y-auto whitespace-pre-line text-foreground"
+              style={{ maxHeight: "200px" }}
+            >
+              {q.passage.bg}
+            </div>
           </div>
         )}
 
         <h2 className="text-xl font-semibold text-foreground">{q.prompt}</h2>
 
+        {/* Listening replay — label updated; auto-play instruction removed from here
+            since it lives in the question prompt itself */}
         {q.audio && (
           <button
             onClick={() => speak(q.audio!)}
             className="mt-3 inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-4 py-2 text-sm font-medium text-primary hover:bg-primary hover:text-primary-foreground"
             type="button"
           >
-            ▶ Replay audio
+            ▶ Play again
           </button>
         )}
 
@@ -212,15 +280,20 @@ function Runner({
   );
 }
 
+// ── Results ────────────────────────────────────────────────────────────────────
 function Results({ r, onRestart }: { r: CefrResult; onRestart: () => void }) {
+  const [copied, setCopied] = useState(false);
   const shareText = `I scored ${r.level} (${r.pct}%) on the Български Trainer CEFR test 🇧🇬`;
 
   function share() {
-    if (typeof navigator !== "undefined" && navigator.share) {
+    if (typeof navigator === "undefined") return;
+    if (navigator.share) {
       navigator.share({ title: "My Bulgarian CEFR result", text: shareText }).catch(() => {});
-    } else if (typeof navigator !== "undefined" && navigator.clipboard) {
-      navigator.clipboard.writeText(shareText);
-      alert("Copied: " + shareText);
+    } else if (navigator.clipboard) {
+      navigator.clipboard.writeText(shareText).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      });
     }
   }
 
@@ -230,6 +303,14 @@ function Results({ r, onRestart }: { r: CefrResult; onRestart: () => void }) {
     B1: "text-green-400",
     B2: "text-emerald-300",
   };
+
+  // Split "Можете: … Все още не можете: …" into two readable parts
+  const [canDo, cannotDo] = useMemo(() => {
+    const text = r.summary ?? "";
+    const splitIdx = text.indexOf("Все още не можете");
+    if (splitIdx === -1) return [text, null];
+    return [text.slice(0, splitIdx).trim(), text.slice(splitIdx).trim()];
+  }, [r.summary]);
 
   return (
     <div className="space-y-6">
@@ -263,17 +344,21 @@ function Results({ r, onRestart }: { r: CefrResult; onRestart: () => void }) {
 
       <section className="rounded-xl border border-border bg-card p-5">
         <h2 className="text-lg font-semibold">What this means</h2>
-        <p className="mt-2 text-sm text-muted-foreground">{r.summary}</p>
+        {/* Split summary into two visual paragraphs for readability */}
+        <p className="mt-2 text-sm text-muted-foreground">{canDo}</p>
+        {cannotDo && (
+          <p className="mt-2 text-sm text-muted-foreground">{cannotDo}</p>
+        )}
         <h3 className="mt-4 text-sm font-semibold text-foreground">Recommended focus</h3>
         <p className="mt-1 text-sm text-muted-foreground">{r.recommendation}</p>
       </section>
 
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <button
           onClick={share}
           className="rounded-md bg-primary px-5 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
         >
-          📤 Share my result
+          {copied ? "✓ Copied!" : "📤 Share my result"}
         </button>
         <button
           onClick={onRestart}
