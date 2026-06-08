@@ -37,6 +37,7 @@ export const Route = createRootRoute({
       { property: "og:type", content: "website" },
       { name: "theme-color", content: "#2f6b3a" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "default" },
       { name: "apple-mobile-web-app-title", content: "БГ Trainer" },
       { name: "twitter:card", content: "summary" },
