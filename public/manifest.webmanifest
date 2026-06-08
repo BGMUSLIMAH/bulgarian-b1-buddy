@@ -2,7 +2,7 @@
   "name": "Български Trainer — Learn Bulgarian B1",
   "short_name": "БГ Trainer",
   "description": "Reach B1 Bulgarian with 750+ words, 200+ verbs, quizzes, listening, speaking, reading and evaluation.",
-  "start_url": "/",
+  "start_url": "https://b1.learnbg.workers.dev",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
