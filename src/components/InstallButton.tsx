@@ -14,8 +14,7 @@ function isIOS(): boolean {
   if (typeof navigator === "undefined" || typeof window === "undefined") return false;
   const ua = navigator.userAgent || "";
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const isIDevice = /iPhone|iPad|iPod/.test(ua) && !(window as any).MSStream;
-  return isIDevice;
+  return /iPhone|iPad|iPod/.test(ua) && !(window as any).MSStream;
 }
 
 function isStandalone(): boolean {
@@ -29,6 +28,8 @@ export function InstallButton() {
   const [canPrompt, setCanPrompt] = useState(false);
   const [installed, setInstalled] = useState(false);
   const [showIosBanner, setShowIosBanner] = useState(false);
+  // "not ready yet" tooltip state for Android when prompt hasn't fired
+  const [showNotReady, setShowNotReady] = useState(false);
 
   useEffect(() => {
     if (isStandalone()) {
@@ -50,7 +51,7 @@ export function InstallButton() {
     window.addEventListener("beforeinstallprompt", onBeforeInstall);
     window.addEventListener("appinstalled", onInstalled);
 
-    // iOS doesn't fire beforeinstallprompt — show banner on iOS unless dismissed.
+    // iOS: show banner on first visit unless dismissed
     if (isIOS() && localStorage.getItem(IOS_DISMISSED_KEY) !== "1") {
       setShowIosBanner(true);
     }
@@ -61,23 +62,32 @@ export function InstallButton() {
     };
   }, []);
 
-  async function handleInstall() {
+  async function handleClick() {
+    // iOS — always show the share instructions banner
     if (isIOS()) {
       setShowIosBanner(true);
       return;
     }
-    const ev = promptRef.current;
-    if (!ev) return;
-    try {
-      await ev.prompt();
-      const choice = await ev.userChoice;
-      if (choice.outcome === "accepted") setInstalled(true);
-    } catch {
-      /* ignore */
-    } finally {
-      promptRef.current = null;
-      setCanPrompt(false);
+
+    // Android / desktop Chrome — prompt is ready, fire it
+    if (canPrompt && promptRef.current) {
+      try {
+        await promptRef.current.prompt();
+        const choice = await promptRef.current.userChoice;
+        if (choice.outcome === "accepted") setInstalled(true);
+      } catch {
+        /* ignore */
+      } finally {
+        promptRef.current = null;
+        setCanPrompt(false);
+      }
+      return;
     }
+
+    // Prompt not ready yet (Chrome needs engagement / HTTPS / valid manifest).
+    // Show a brief inline tooltip rather than a misleading "open browser menu" banner.
+    setShowNotReady(true);
+    setTimeout(() => setShowNotReady(false), 3000);
   }
 
   function dismissIos() {
@@ -86,30 +96,28 @@ export function InstallButton() {
   }
 
   if (installed) return null;
-  // Button is ALWAYS visible in the navbar. If no prompt is captured yet,
-  // clicking shows a hint banner (or iOS instructions on iOS).
-
-  async function handleClick() {
-    if (canPrompt && promptRef.current) {
-      await handleInstall();
-      return;
-    }
-    // No prompt available — show iOS instructions on iOS, generic hint elsewhere.
-    setShowIosBanner(true);
-  }
-
-  const iosMode = isIOS();
 
   return (
     <>
-      <button
-        onClick={handleClick}
-        title="Install Bulgarian Trainer as an app"
-        className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
-        type="button"
-      >
-        📲 Install App
-      </button>
+      <div className="relative inline-flex">
+        <button
+          onClick={handleClick}
+          title="Install Bulgarian Trainer as an app"
+          className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+          type="button"
+        >
+          📲 Install App
+        </button>
+
+        {/* "Not ready yet" tooltip — shows briefly when Android prompt hasn't fired */}
+        {showNotReady && (
+          <div className="absolute left-1/2 top-full z-50 mt-2 w-56 -translate-x-1/2 rounded-lg border border-border bg-card px-3 py-2 text-xs text-muted-foreground shadow-lg">
+            Chrome needs a moment — try again in a few seconds, or use the browser menu → <span className="font-medium text-foreground">Add to Home Screen</span>.
+          </div>
+        )}
+      </div>
+
+      {/* iOS / generic install instructions banner */}
       {showIosBanner && (
         <div
           role="alert"
@@ -117,10 +125,10 @@ export function InstallButton() {
         >
           <span className="text-lg" aria-hidden>📲</span>
           <p className="flex-1 text-foreground">
-            {iosMode ? (
-              <>To install on iPhone: tap <span className="font-semibold">Share</span> → <span className="font-semibold">Add to Home Screen</span>.</>
+            {isIOS() ? (
+              <>Tap <span className="font-semibold">Share</span> then <span className="font-semibold">Add to Home Screen</span> to install.</>
             ) : (
-              <>To install: open your browser menu and choose <span className="font-semibold">Install app</span> or <span className="font-semibold">Add to Home Screen</span>.</>
+              <>Tap the browser menu then <span className="font-semibold">Add to Home Screen</span> to install.</>
             )}
           </p>
           <button
