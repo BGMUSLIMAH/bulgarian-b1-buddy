@@ -1,4 +1,4 @@
-// Minimal offline-first service worker for Български Trainer.
+// Minimal offline-first service worker for Български Trainer. 
 // Only registered in production AND outside Lovable preview iframes
 // (see registration logic in __root.tsx).
 const CACHE = "bg-trainer-v1";
