@@ -84,9 +84,9 @@ export function InstallButton() {
       return;
     }
 
-    // Prompt not ready (Chrome needs engagement, or other browsers e.g. Firefox/Safari desktop).
-    // Show the instructions banner so users always have a path to install.
-    setShowIosBanner(true);
+    // Prompt not ready yet (Chrome needs engagement / HTTPS / valid manifest).
+    setShowNotReady(true);
+    setTimeout(() => setShowNotReady(false), 3000);
   }
 
   function dismissIos() {
