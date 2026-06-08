@@ -1,9 +1,13 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "tanstack-start-app",
+  "name": "bulgarian-b1-buddy",
   "compatibility_date": "2025-09-24",
   "compatibility_flags": ["nodejs_compat"],
-  "main": "@tanstack/react-start/server-entry",
+  "main": "dist/server/server.js",
+  "assets": {
+    "directory": "./dist/client",
+    "binding": "ASSETS"
+  },
   "vars": {
     "VITE_UMAMI_WEBSITE_ID": "bff4d430-2078-4a1e-bc86-803930542c56",
     "VITE_UMAMI_URL": "https://cloud.umami.is/script.js",
