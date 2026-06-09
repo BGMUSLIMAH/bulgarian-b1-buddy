@@ -1,4 +1,4 @@
-import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
+import { Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
 import { Layout } from "@/components/Layout";
 
 import appCss from "../styles.css?url";
@@ -43,8 +43,8 @@ export const Route = createRootRoute({
       { name: "twitter:card", content: "summary" },
       { name: "twitter:title", content: "Bulgarian Trainer B1 — Learn real-life & technical Bulgarian" },
       { name: "twitter:description", content: "Reach B1 Bulgarian with vocabulary, verbs, quizzes, listening, speaking, reading, and a full evaluation system." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/43aa8449-0677-49bc-8658-d83987d2932b/id-preview-1418d7fc--ce02234b-5056-4f16-ab09-28865c57b06e.lovable.app-1776525686241.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/43aa8449-0677-49bc-8658-d83987d2932b/id-preview-1418d7fc--ce02234b-5056-4f16-ab09-28865c57b06e.lovable.app-1776525686241.png" },
+      { property: "og:image", content: "https://r2.dev" },
+      { name: "twitter:image", content: "https://r2.dev" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
@@ -63,12 +63,13 @@ function RootShell({ children }: { children: React.ReactNode }) {
     <html lang="en">
       <head>
         <script dangerouslySetInnerHTML={{ __html: `
-  window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    window.deferredPrompt = e;
-    window.dispatchEvent(new CustomEvent('pwa-installable'));
-  });
-` }} />
+          window.deferredPrompt = window.deferredPrompt || null;
+          window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            window.deferredPrompt = e;
+            window.dispatchEvent(new CustomEvent('pwa-installable'));
+          });
+        ` }} />
         <HeadContent />
         <script
           async
@@ -83,6 +84,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
     </html>
   );
 }
+
 const SW_REGISTER = `
 (function () {
   if (!('serviceWorker' in navigator)) return;
