@@ -37,18 +37,43 @@ export function InstallButton() {
       return;
     }
 
+    // 1. Check if the root HTML script already captured the prompt
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const earlyPrompt = (window as any).deferredPrompt;
+    if (earlyPrompt) {
+      promptRef.current = earlyPrompt;
+      setCanPrompt(true);
+    }
+
+    // 2. Fallback event handler if it fires right during hydration
     function onBeforeInstall(e: Event) {
       e.preventDefault();
       promptRef.current = e as BeforeInstallPromptEvent;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window as any).deferredPrompt = e;
       setCanPrompt(true);
     }
+
+    // 3. Custom event notifier sent from our __root.tsx inline script
+    function onPwaInstallable() {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const e = (window as any).deferredPrompt;
+      if (e) {
+        promptRef.current = e;
+        setCanPrompt(true);
+      }
+    }
+
     function onInstalled() {
       setInstalled(true);
       setCanPrompt(false);
       promptRef.current = null;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window as any).deferredPrompt = null;
     }
 
     window.addEventListener("beforeinstallprompt", onBeforeInstall);
+    window.addEventListener("pwa-installable", onPwaInstallable);
     window.addEventListener("appinstalled", onInstalled);
 
     // iOS: show banner on first visit unless dismissed
@@ -58,6 +83,7 @@ export function InstallButton() {
 
     return () => {
       window.removeEventListener("beforeinstallprompt", onBeforeInstall);
+      window.removeEventListener("pwa-installable", onPwaInstallable);
       window.removeEventListener("appinstalled", onInstalled);
     };
   }, []);
@@ -79,6 +105,8 @@ export function InstallButton() {
         /* ignore */
       } finally {
         promptRef.current = null;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (window as any).deferredPrompt = null;
         setCanPrompt(false);
       }
       return;
