@@ -2,7 +2,7 @@
 // Only registered in production AND outside Lovable preview iframes
 // (see registration logic in __root.tsx).
 const CACHE = "bg-trainer-v1";
-const CORE = ["/", "/manifest.webmanifest", "/icon-512.png"];
+const CORE = ["/", "/manifest.webmanifest", "/icon-512.PNG"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(CORE)).catch(() => {}));
@@ -24,7 +24,7 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(req.url);
 
   // Never cache Google TTS audio — let the browser handle it directly.
-  if (url.hostname.includes("translate.google.com")) return;
+  if (url.hostname.includes("://google.com")) return;
 
   // Navigation requests: network-first, fallback to cached "/" for offline.
   if (req.mode === "navigate") {
