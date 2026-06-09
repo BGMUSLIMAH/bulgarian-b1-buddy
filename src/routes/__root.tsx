@@ -62,6 +62,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <head>
+        {/* CRITICAL: This MUST be the absolute first thing inside <head> */}
         <script dangerouslySetInnerHTML={{ __html: `
           window.deferredPrompt = window.deferredPrompt || null;
           window.addEventListener('beforeinstallprompt', (e) => {
@@ -70,6 +71,8 @@ function RootShell({ children }: { children: React.ReactNode }) {
             window.dispatchEvent(new CustomEvent('pwa-installable'));
           });
         ` }} />
+        
+        {/* Everything else goes AFTER the event listener */}
         <HeadContent />
         <script
           async
