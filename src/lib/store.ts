@@ -270,7 +270,7 @@ let currentAudio: HTMLAudioElement | null = null;
 
 function googleTtsUrl(text: string): string {
   const enc = encodeURIComponent(text);
-  return `https://bg-tts-proxy.amrani-amine-aero.workers.dev/?text=${enc}`;
+  return `https://bg-tts-proxy.learnbg.workers.dev/?text=${enc}`;
 }
 
 function browserSpeak(text: string) {
