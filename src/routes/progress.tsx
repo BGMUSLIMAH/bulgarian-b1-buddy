@@ -185,7 +185,37 @@ function ProgressPage() {
             </div>
           </section>
         )}
-
+{/* Mastered items */}
+{mastered > 0 && (
+  <section id="mastered">
+    <h2 className="mb-3 font-display text-2xl font-bold">⭐ Mastered ({mastered})</h2>
+    <div className="overflow-hidden rounded-xl border border-border">
+      <table className="w-full text-sm">
+        <thead className="bg-secondary text-secondary-foreground">
+          <tr>
+            <th className="px-4 py-2 text-left">Item</th>
+            <th className="px-4 py-2 text-right">Correct</th>
+            <th className="px-4 py-2 text-right">Wrong</th>
+            <th className="px-4 py-2 text-right">Streak</th>
+          </tr>
+        </thead>
+        <tbody>
+          {Object.entries(stats.perWord)
+            .filter(([, v]) => v.correct >= 2)
+            .sort((a, b) => b[1].correct - a[1].correct)
+            .map(([k, v]) => (
+              <tr key={k} className="border-t border-border bg-card">
+                <td className="px-4 py-2 font-mono text-xs text-muted-foreground">{k.replace(/^(word:|verb:|conj:|past:|fut:)/, "")}</td>
+                <td className="px-4 py-2 text-right font-medium text-primary">{v.correct}</td>
+                <td className="px-4 py-2 text-right text-destructive">{v.wrong}</td>
+                <td className="px-4 py-2 text-right">⭐ {v.streak}</td>
+              </tr>
+            ))}
+        </tbody>
+      </table>
+    </div>
+  </section>
+)}
         <section>
           <h2 className="mb-3 font-display text-2xl font-bold">Most practiced</h2>
           {top.length === 0 ? (
