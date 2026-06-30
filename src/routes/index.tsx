@@ -38,7 +38,10 @@ function Dashboard() {
           <Stat label="Verbs" value={VERBS.length} />
           <Stat label="Answers" value={total} />
           <Stat label="Accuracy" value={`${acc}%`} />
-          <Stat label="⭐ Mastered" value={mastered} />
+          <a href="/progress#mastered" className="rounded-lg bg-background/50 p-4 block hover:ring-1 hover:ring-primary/50 transition-all">
+  <p className="text-xs uppercase tracking-wider text-muted-foreground">⭐ Mastered</p>
+  <p className="mt-1 text-2xl font-bold text-foreground">{mastered}</p>
+</a>
         </div>
       </section>
 
