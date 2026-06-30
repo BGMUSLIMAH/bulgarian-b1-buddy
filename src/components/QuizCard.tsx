@@ -97,8 +97,14 @@ export function QuizCard({ question, onAnswered, onNext, index, total }: Props) 
     const correct = opt === question.correct;
     recordAnswer(question.key, correct, question.category);
     onAnswered(correct);
-    if (correct) playCorrect();
-    else playWrong();
+    if (correct) {
+  playCorrect();
+  setTimeout(() => {
+    const encoded = encodeURIComponent(question.correct);
+    const audio = new Audio(`https://bg-tts-proxy.learnbg.workers.dev/?text=${encoded}&lang=bg`);
+    audio.play().catch(() => {});
+  }, 500);
+} else playWrong();
   }
 
   function goNext() {
